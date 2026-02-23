@@ -37,14 +37,14 @@ mlb-model/
 ├── config.py                    # Central config (paths, credentials, features, params)
 ├── feature_engine.py            # Single source of truth for all candidate features
 ├── 00_build_historical.py       # Build training data from historical archives (run once)
-├── 01_scrape_fangraphs.py       # FanGraphs team/pitcher stats (pybaseball)
-├── 01b_scrape_statcast.py       # Statcast/Baseball Savant (pybaseball)
-├── 01c_scrape_park_factors.py   # Park factors (FanGraphs/ESPN)
-├── 02_scrape_bref.py            # Baseball Reference standings + game logs
-├── 02b_scrape_pitcher_logs.py   # Starting pitcher game logs (pybaseball)
+├── 01_fetch_games.py            # MLB Stats API: schedule, boxscores, linescores, SP IDs, umpires, weather
+├── 01b_scrape_statcast.py       # Statcast/pybaseball: pitch-level data → per-game SP advanced metrics
+├── 01c_scrape_park_factors.py   # Park factors (baseballr/FanGraphs or static CSV)
+├── 02_scrape_bref.py            # Baseball Reference: standings, team game logs
+├── 02b_build_pitcher_logs.py    # Merge MLB Stats API SP lines + Statcast advanced → pitcher_logs_all.csv
 ├── 02c_scrape_bullpen.py        # Bullpen usage and fatigue metrics
-├── 02d_scrape_weather.py        # Weather forecasts for game-day conditions
-├── 02e_scrape_lineups.py        # Confirmed lineups (RotoBaller, MLB API)
+├── 02d_scrape_weather.py        # Open-Meteo forecasts (pre-game) — backtesting uses MLB API actual weather
+├── 02e_scrape_lineups.py        # Probable pitchers + lineups (MLB Stats API + Rotowire for early confirms)
 ├── 03_fetch_schedule.py         # ESPN/MLB API schedule
 ├── 04_fetch_odds.py             # Odds API (moneylines, run lines, totals)
 ├── 05_build_features.py         # Daily feature engineering + team name normalization
@@ -275,14 +275,19 @@ MLB offers far more market surface area than CBB. Rather than assuming where the
 we build separate models per market and let backtesting reveal what's profitable.
 
 ### Market → Model Mapping
+**PRIMARY (Phase 1):**
 | Market | Model Target | Key Thesis | Feature Emphasis |
 |--------|-------------|------------|------------------|
 | **Full-game ML** | Home run margin | Core win prediction | Everything — SP, bullpen, batting, park, weather |
-| **Run Line (+/-1.5)** | Home run margin | Derived from margin model (like CBB spread) | Same as ML; margin distribution matters |
 | **Full-game Total** | Combined runs | Scoring environment | Park, weather, SP, bullpen, pace |
 | **F5 ML** | Home margin thru 5 inn | SP matchup isolated — no bullpen noise | **SP stats only**, batting vs SP hand, park |
 | **F5 Total** | Combined runs thru 5 inn | SP-driven scoring, cleaner signal | SP stats, park, weather, batting |
-| **NRFI/YRFI** | P(0 runs in 1st inning) | Binary classification, niche market | SP 1st-inning splits, leadoff hitter stats, umpire zone |
+
+**SECONDARY (Phase 2+, separate effort):**
+| Market | Model Target | Key Thesis | Feature Emphasis |
+|--------|-------------|------------|------------------|
+| **Run Line (+/-1.5)** | Home run margin | Derived from margin model (like CBB spread) | Same as ML; margin distribution matters |
+| **NRFI/YRFI** | P(0 runs in 1st inning) | Binary classification, niche market — may be separate model | SP 1st-inning splits, leadoff hitter stats, umpire zone |
 | **Team Total** | Individual team runs | Asymmetric — one team's offense vs opponent's pitching | SP matchup, batting, park (one-sided) |
 | **Alt Run Lines** | Home run margin | Heavier juice but wider edges on big opinions | Same as ML; calibration of margin tails matters |
 
@@ -380,6 +385,69 @@ Also available: `_1st_3_innings` and `_1st_7_innings` variants for all market ty
 - **Odds collection**: Must fetch F5 (`h2h_1st_5_innings`, `totals_1st_5_innings`) and
   1st-inning (`totals_1st_1_innings`) markets. Team totals not in Odds API — gap.
 
+## Data Architecture — How Stats Flow Into Features
+
+The most important thing to understand: we need **per-game pitcher lines** to build
+cumulative stats, NOT season-level snapshots. Season-level FanGraphs pulls give you
+one row per pitcher per season — useless for computing "ERA as of April 20th."
+
+### Layer 1: Game Results + SP Identification (MLB Stats API)
+For every historical game, the MLB Stats API `/game/{gamePk}/feed/live` gives:
+- `home_sp_id`, `away_sp_id` — who started
+- SP pitching line: IP, H, R, ER, K, BB, HR, pitches thrown
+- Linescore: inning-by-inning runs → **F5 targets** (sum innings 1-5) + **NRFI label**
+- Full boxscore: all player stats, batting order
+- Umpire, weather, venue
+
+This is the backbone. One API call per game. For ~2,430 games/season x 7 seasons = ~17K calls.
+With MLB-StatsAPI Python wrapper: `statsapi.boxscore_data(game_pk)`.
+
+### Layer 2: Advanced Pitcher Metrics (Statcast via pybaseball)
+Statcast pitch-level data adds what box scores don't have:
+- xwOBA, barrel%, hard-hit%, exit velo against
+- Pitch velocity, spin rate, movement
+- Whiff rate, chase rate, zone%
+
+Pull via `statcast(start_dt, end_dt)` → group by `pitcher` (ID) + `game_pk` →
+aggregate per-game advanced metrics. Merge with Layer 1 on (pitcher_id, game_pk).
+
+Available from 2015 (full Statcast). 2008-2014 has PITCHf/x (velocity/movement only).
+
+### Layer 3: Feature Computation (feature_engine.py)
+`StartingPitcherComputer` takes the merged pitcher log table and computes:
+- **Cumulative stats**: ERA-to-date, FIP-to-date, K%-to-date, xwOBA-to-date
+- **Recency stats**: ERA last 3 starts, K% last 3 starts, IP trend
+- **Workload**: Season IP, days rest, pitch count trend
+- All strictly using `date < game_date` (no lookahead)
+
+### How FIP is Computed (example)
+FIP = ((13*HR + 3*BB - 2*K) / IP) + constant (~3.1)
+We compute this FROM the raw game logs, NOT from FanGraphs. Same for WHIP, K%, BB%.
+Only xStats (xwOBA, xFIP, barrel%) require Statcast pitch-level data.
+
+### Pipeline Flow
+```
+Historical:
+  MLB Stats API (all games) → game_results_all.csv (results + linescore + SP IDs)
+                             → pitcher_game_logs.csv (SP line per game)
+  Statcast (pybaseball)     → statcast_pitcher_games.csv (advanced per-game)
+  Merge on (pitcher_id, game_pk) → pitcher_logs_all.csv (complete SP log)
+  00_build_historical.py reads pitcher_logs_all.csv → StartingPitcherComputer
+
+Daily:
+  MLB Stats API /schedule   → today's games + probable pitchers
+  Look up each SP's cumulative stats from historical pitcher logs
+  05_build_features.py      → feature matrix for today's games
+```
+
+### Target Variables per Model
+| Model | Target | Source |
+|-------|--------|--------|
+| margin_model | `home_score - away_score` | MLB Stats API boxscore |
+| total_model | `home_score + away_score` | MLB Stats API boxscore |
+| f5_margin_model | `home_runs_thru_5 - away_runs_thru_5` | MLB Stats API linescore (sum innings 1-5) |
+| f5_total_model | `home_runs_thru_5 + away_runs_thru_5` | MLB Stats API linescore (sum innings 1-5) |
+
 ## Feature Categories (Planned — Requires Research)
 | Category | Example Features | MLB Justification |
 |----------|-----------------|-------------------|
@@ -449,3 +517,4 @@ Not yet established — project is in INITIAL RESEARCH phase.
 | 2026-02-22 | Repository bootstrapped from CBB template | Initial structure + pipeline stubs |
 | 2026-02-22 | Expanded to multi-market architecture (F5, NRFI, team totals, alt RL) | 6+ model targets, derivative market research plan |
 | 2026-02-23 | Comprehensive data source audit — MLB Stats API as backbone, fixed Odds API market keys, Open-Meteo replaces paid weather, pybaseball FanGraphs broken | Only real cost is Odds API ($59-119/mo shared w/ CBB) |
+| 2026-02-23 | Data architecture doc: game-by-game SP stats flow (MLB API boxscore → Statcast advanced → cumulative). Priority: full-game + F5 ML/total. NRFI secondary. | Rewrote pipeline script responsibilities |
