@@ -110,15 +110,165 @@ All feature logic in `feature_engine.py`. All team name normalization in `05_bui
 - Rebuild historical: `./run_daily.sh build` (slow — multiple seasons)
 
 ## Data Sources
-| Source | Auth | Script | Notes |
-|--------|------|--------|-------|
-| **FanGraphs** | None (pybaseball) | `01_`, `01b_` | Team stats, pitcher stats, leaderboards |
-| **Statcast/Savant** | None (pybaseball) | `01b_` | Pitch-level data, xStats, barrel rates |
-| **Baseball Reference** | None | `02_`, `02b_` | Standings, game logs, splits |
-| **ESPN** | None | `03_` | Schedule, scores, lineup status |
-| **MLB Stats API** | None | `02e_`, `03_` | Official schedule, confirmed lineups |
-| **Odds API** | `ODDS_API_KEY` (~$80/mo) | `04_` | Moneylines, run lines, totals from 15+ books |
-| **Weather API** | `WEATHER_API_KEY` (optional) | `02d_` | Game-day weather forecasts |
+
+### Source Overview
+| Source | Auth | Cost | Script | Primary Data |
+|--------|------|------|--------|-------------|
+| **MLB Stats API** | None | Free | `01_`, `02e_`, `03_` | Schedule, linescore (inning-by-inning), boxscore, lineups, umpires, weather, probable SP |
+| **Statcast / Savant** | None | Free | `01b_` | Pitch-level data, xStats, barrel rates, exit velo, launch angle |
+| **FanGraphs** | None | Free* | `01c_` | Team/pitcher leaderboards, park factors, splits, projections |
+| **Baseball Reference** | None | Free | `02_`, `02b_` | Standings, game logs, pitcher logs, splits |
+| **Retrosheet** | None | Free | `00_` | Historical play-by-play (1898-2025), box scores, game logs |
+| **Odds API** | `ODDS_API_KEY` | $59-119/mo | `04_` | ML, run line, totals, F5, 1st-inning, props from 15+ books |
+| **Open-Meteo** | None | Free | `02d_` | Forecasts + historical weather archive (no API key needed) |
+| **Rotowire** | None | Free† | `02e_` | Early lineup confirmations, probable pitchers (2-4 hrs pre-game) |
+
+*FanGraphs membership ($80/yr) optional for Splits Tool access. Programmatic via baseballr (R) or scraping.
+†Rotowire full SP grid requires paid sub; basic lineup page is free.
+
+### MLB Stats API — The Motherlode (FREE)
+Base URL: `https://statsapi.mlb.com/api/v1/`
+Python wrapper: `pip install MLB-StatsAPI` (toddrob99)
+
+This is MLB's own production API — powers MLB.com and the MLB app. No auth required.
+Single most important data source for this project.
+
+| Endpoint | URL Pattern | Critical Data |
+|----------|-------------|---------------|
+| Schedule | `/schedule?date=YYYY-MM-DD` | Game PKs, status, teams, start times |
+| Game Feed | `/game/{gamePk}/feed/live` | **Everything in one call**: linescore, boxscore, plays, umpires, weather, venue, probable pitchers |
+| Linescore | `/game/{gamePk}/linescore` | **Inning-by-inning runs** — key for F5 + NRFI targets |
+| Boxscore | `/game/{gamePk}/boxscore` | Full player stats, batting order, pitcher lines |
+| Play-by-Play | `/game/{gamePk}/playByPlay` | Every play/pitch in sequence |
+
+**Why this matters**: The linescore endpoint gives inning-by-inning runs for every game.
+- F5 scores = sum innings 1-5 per team
+- NRFI label = `innings[0].home.runs == 0 AND innings[0].away.runs == 0`
+- Game-time weather from `gameData.weather` (actual, not forecast — better for backtesting)
+- HP umpire from `gameData.officials`
+
+Historical depth: Detailed game feeds back to ~2005. Schedule data goes further.
+Rate limits: Undocumented but tolerant of reasonable usage. No key required.
+
+### Statcast / Baseball Savant (FREE)
+Access: `pip install pybaseball` → `statcast(start_dt, end_dt)`
+
+Pitch-level data for every MLB pitch. Key for SP quality metrics and first-inning analysis.
+- **Fields**: velocity, spin rate, exit velo, launch angle, xBA, xSLG, xwOBA, barrel%,
+  hard-hit%, pitch type, zone, `inning`, `inning_topbot`, `at_bat_number`
+- **First-inning filtering**: `inning == 1` gives all pitches in first innings →
+  compute SP first-inning K%, whiff rate, barrel rate for NRFI features
+- **Historical depth**: PITCHf/x from 2008, full Statcast from 2015, swing tracking from 2024
+- **Limits**: 30K rows per query; pybaseball auto-chunks into 5-day windows
+
+### FanGraphs (FREE website, $80/yr membership optional)
+Access: `baseballr` (R, more reliable) or scraping. **pybaseball FanGraphs functions are
+currently broken** as of late 2025 due to website changes.
+
+| Data | Access | Notes |
+|------|--------|-------|
+| Pitcher/batter leaderboards | baseballr `fg_pitcher_leaders()` | 330+ metrics: FIP, xFIP, SIERA, K%, BB%, etc. |
+| Park factors | baseballr `fg_park()`, `fg_park_hand()` | 1yr/3yr/5yr regressed, per-event (HR, K, BB, GB), LHB/RHB splits |
+| **SP first-inning splits** | Splits Tool (web) or scraping | 1st-inning ERA, K%, BB%, HR/FB%, wOBA-against — **critical for NRFI** |
+| Projections | Steamer, ZiPS, ATC, THE BAT | Pre-season and in-season updated |
+| Plate discipline | Leaderboards | O-Swing%, Z-Swing%, SwStr% |
+
+**Key limitation**: No official API. baseballr (R) is the most reliable programmatic access.
+For Python pipeline, options are: (1) R subprocess calls via baseballr, (2) Selenium scraping,
+(3) the `pybaseballstats` package (newer alternative, Polars-based, updated Feb 2026).
+
+### Baseball Reference (FREE)
+Access: pybaseball `schedule_and_record()`, `pitching_stats_range()`, or BeautifulSoup
+(static HTML, no JS rendering needed).
+
+- Game logs, box scores, standings, transactions
+- Pitcher by-inning splits (including 1st inning) — backup for FanGraphs
+- Historical depth: Complete MLB history from 1876
+- **Rate limits**: Will throttle aggressive scrapers. Use 3-5 second delays.
+
+### Retrosheet (FREE, including commercial use)
+Access: Bulk CSV downloads from retrosheet.org. Also via pybaseball `retrosheet` module.
+
+- Play-by-play event files from 1898-2025
+- Box scores, game logs, inning-by-inning scores
+- **Key for historical training data**: Deepest NRFI and F5 source (inning-by-inning
+  scoring going back 100+ years)
+- 7 master CSV files covering all games
+
+### The Odds API (PAID — shared with CBB)
+Already in use for CBB model. Same API key and credit pool.
+
+**MLB-specific market keys** (verified from docs):
+| Market Key | Description | Model |
+|------------|-------------|-------|
+| `h2h` | Full-game moneyline | margin_model |
+| `spreads` | Full-game run line | margin_model |
+| `totals` | Full-game over/under | total_model |
+| `h2h_1st_5_innings` | **F5 moneyline** | f5_margin_model |
+| `spreads_1st_5_innings` | **F5 run line** | f5_margin_model |
+| `totals_1st_5_innings` | **F5 over/under** | f5_total_model |
+| `totals_1st_1_innings` | **1st-inning O/U** (NRFI proxy @ 0.5) | nrfi_model |
+| `h2h_1st_1_innings` | 1st-inning moneyline | nrfi_model |
+| `h2h_3_way_1st_1_innings` | 1st-inning 3-way (includes draw = NRFI) | nrfi_model |
+| `h2h_1st_3_innings` | 1st 3 innings ML | future exploration |
+| `h2h_1st_7_innings` | 1st 7 innings ML | future exploration |
+| `batter_home_runs` | Batter HR props | future exploration |
+| `pitcher_strikeouts` | Pitcher K props | future exploration |
+
+**NOTE**: The original config used `h2h_h1` / `totals_h1` — these are **wrong**. Correct
+MLB keys use the `_1st_N_innings` format. Config must be updated.
+
+**No dedicated team totals market key** for MLB as of current docs. Gap.
+
+**Pricing**: $59/mo (100K credits) likely sufficient for daily MLB + CBB.
+Each call = 1 credit/region/market. Historical odds = 10 credits/region/market.
+Historical F5/NRFI odds available from mid-2020.
+
+### Open-Meteo (FREE — replaces Weather API)
+No API key required. No signup needed.
+
+- Forecasts: 1-16 day temperature, humidity, wind speed/direction, precipitation, cloud cover
+- **Historical weather archive**: ERA5 reanalysis data from 1940 — free backtesting weather
+- Resolution: 1-11 km
+- Historical Forecast API: archived model forecasts (what would the forecast have been?)
+- **Replaces**: OpenWeatherMap ($40/mo for historical) and Visual Crossing ($35/mo)
+
+For completed games, MLB Stats API `gameData.weather` gives actual game-time conditions
+(more accurate than any forecast). Use Open-Meteo for pre-game predictions only.
+
+### Umpire Data (FREE — multiple sources)
+| Source | Data | Access |
+|--------|------|--------|
+| MLB Stats API | HP umpire assignment per game | `gameData.officials` in game feed |
+| Statcast | Umpire ID per pitch | Cross-ref with game_pk |
+| UmpScores | Umpire ratings and tendencies | umpscorecards.com (free) |
+| Swish Analytics | K Boost, BB Boost per umpire | swishanalytics.com (free) |
+
+Build umpire tendency metrics from Statcast data (called strike rate, K%/BB% boost)
+or scrape pre-computed from UmpScores/Swish.
+
+### Lineup Confirmation (FREE)
+| Source | Timing | Access |
+|--------|--------|--------|
+| Rotowire | 2-4 hrs pre-game (earliest) | Scrape `rotowire.com/baseball/daily-lineups.php` |
+| Rotogrinders | Similar timing | Scrape `rotogrinders.com/lineups/mlb` |
+| MLB Stats API | ~1 hr pre-game (official submission) | Game feed `liveData.boxscore` |
+
+Pipeline should check Rotowire for early SP confirmation, then verify via MLB Stats API
+closer to game time. SP scratches are the #1 source of stale predictions.
+
+### Cost Summary
+| Source | Cost | Necessity |
+|--------|------|-----------|
+| MLB Stats API | Free | **Essential** — primary data backbone |
+| Statcast/pybaseball | Free | **Essential** — SP quality metrics |
+| Baseball Reference | Free | **Essential** — game logs, standings |
+| Retrosheet | Free | **Important** — deep historical training data |
+| Open-Meteo | Free | **Important** — weather forecasts (free beats paid alternatives) |
+| Umpire sources | Free | **Nice-to-have** — NRFI feature, Phase 3 |
+| **The Odds API** | **$59-119/mo** | **Essential** — odds for all markets (shared with CBB) |
+| FanGraphs membership | $80/yr | **Nice-to-have** — Splits Tool, projections |
+| **Total** | **~$60-120/mo + $80/yr** | Most data is free; Odds API is the only real cost |
 
 ## Multi-Market Architecture
 MLB offers far more market surface area than CBB. Rather than assuming where the edge is,
@@ -152,19 +302,27 @@ we build separate models per market and let backtesting reveal what's profitable
 - **Phase 3**: NRFI model (requires 1st-inning scoring data + SP first-inning splits)
 - **Phase 4**: Team totals, alt run lines (derived from existing models with better calibration)
 
-### Odds API Market Keys
-| Market | Odds API `markets` param | Notes |
-|--------|--------------------------|-------|
-| Full-game ML | `h2h` | Primary, always available |
-| Run line | `spreads` | Usually +/- 1.5, sometimes alternate |
-| Full-game total | `totals` | Standard O/U |
-| F5 ML | `h2h_h1` | First half = first 5 innings in MLB |
-| F5 total | `totals_h1` | First 5 innings O/U |
-| Alt run lines | `alternate_spreads` | -1.5, +1.5, -2.5, etc. (limited availability) |
-| Alt totals | `alternate_totals` | Different total lines (limited availability) |
+### Odds API Market Keys (Verified)
+| Market | Odds API `markets` param | Model | Notes |
+|--------|--------------------------|-------|-------|
+| Full-game ML | `h2h` | margin | Primary, always available |
+| Run line | `spreads` | margin | Usually +/- 1.5 |
+| Full-game total | `totals` | total | Standard O/U |
+| **F5 ML** | `h2h_1st_5_innings` | f5_margin | **NOT** `h2h_h1` |
+| **F5 run line** | `spreads_1st_5_innings` | f5_margin | F5 spread |
+| **F5 total** | `totals_1st_5_innings` | f5_total | **NOT** `totals_h1` |
+| **1st-inning O/U** | `totals_1st_1_innings` | nrfi | O/U 0.5 = NRFI/YRFI proxy |
+| 1st-inning ML | `h2h_1st_1_innings` | nrfi | Who scores first |
+| 1st-inning 3-way | `h2h_3_way_1st_1_innings` | nrfi | Includes draw (= NRFI) |
+| Alt run lines | `alternate_spreads` | margin | -1.5, -2.5, etc. |
+| Alt totals | `alternate_totals` | total | Different total lines |
+| Batter HR props | `batter_home_runs` | future | Player props |
+| Pitcher K props | `pitcher_strikeouts` | future | Player props |
 
-NRFI/YRFI and team totals may require alternate data sources or manual scraping from
-individual books. Not all Odds API tiers include these.
+**No dedicated team totals market key** in Odds API as of current docs.
+Team totals may require scraping from individual sportsbook sites.
+
+Also available: `_1st_3_innings` and `_1st_7_innings` variants for all market types.
 
 ## Core Modeling Decisions (Ported from CBB, Adapted for MLB)
 - **Model**: XGBoost (separate model per market — see Multi-Market Architecture above)
@@ -219,8 +377,8 @@ individual books. Not all Odds API tiers include these.
 - **Season cadence**: Daily pipeline runs March-October (not November-April).
 - **Sample size**: 2,430 games/year (vs ~5,500 CBB) but still much larger per-team
   sample (162 vs ~30 games per team).
-- **Odds collection**: Must fetch F5 (`h2h_h1`, `totals_h1`) markets in addition to
-  standard full-game. NRFI odds may require supplemental sources.
+- **Odds collection**: Must fetch F5 (`h2h_1st_5_innings`, `totals_1st_5_innings`) and
+  1st-inning (`totals_1st_1_innings`) markets. Team totals not in Odds API — gap.
 
 ## Feature Categories (Planned — Requires Research)
 | Category | Example Features | MLB Justification |
@@ -250,7 +408,8 @@ individual books. Not all Odds API tiers include these.
 - **Team names**: ESPN/FanGraphs/Baseball Reference/Odds API all differ slightly.
   MLB has only 30 teams — crosswalk is much simpler than CBB's 350+.
 - **Pitcher changes**: Announced SP can be scratched last-minute. Must check for
-  confirmed starters before finalizing predictions.
+  confirmed starters before finalizing predictions. Rotowire has early (2-4 hr) lineups;
+  MLB Stats API has official (~1 hr pre-game).
 - **Rain delays/postponements**: Games can be postponed or suspended. Pipeline
   must handle gracefully.
 - **Double-headers**: 7-inning games (through 2022), 9-inning (2023+). Historical
@@ -260,6 +419,19 @@ individual books. Not all Odds API tiers include these.
 - **Interleague play**: AL vs NL games — different competitive dynamics.
 - **DH rule**: Universal DH since 2022. Historical data before 2022 has NL pitchers
   batting — need to account for this.
+- **pybaseball FanGraphs broken**: As of late 2025, pybaseball's FanGraphs functions are
+  non-functional due to website changes. Use `baseballr` (R) or `pybaseballstats` (newer
+  Python alternative, Polars-based) instead.
+- **Statcast query limits**: 30K rows per request. pybaseball auto-chunks into 5-day
+  windows. Large historical pulls are slow.
+- **Odds API market keys**: MLB uses `_1st_N_innings` format (e.g., `h2h_1st_5_innings`),
+  NOT the `h2h_h1`/`totals_h1` format. The CBB-style keys are wrong for MLB.
+- **No team totals in Odds API**: As of current docs, no dedicated team total market key
+  for MLB. May need alternative source or compute from individual book scraping.
+- **MLB Stats API weather**: `gameData.weather` in game feed gives actual game-time
+  conditions (temperature, wind, condition). More accurate than forecast for backtesting.
+  Use Open-Meteo for pre-game predictions only.
+- **Baseball Reference throttling**: Will block aggressive scrapers. Use 3-5 second delays.
 
 ## Current Performance
 Not yet established — project is in INITIAL RESEARCH phase.
@@ -276,3 +448,4 @@ Not yet established — project is in INITIAL RESEARCH phase.
 |------|--------|--------|
 | 2026-02-22 | Repository bootstrapped from CBB template | Initial structure + pipeline stubs |
 | 2026-02-22 | Expanded to multi-market architecture (F5, NRFI, team totals, alt RL) | 6+ model targets, derivative market research plan |
+| 2026-02-23 | Comprehensive data source audit — MLB Stats API as backbone, fixed Odds API market keys, Open-Meteo replaces paid weather, pybaseball FanGraphs broken | Only real cost is Odds API ($59-119/mo shared w/ CBB) |

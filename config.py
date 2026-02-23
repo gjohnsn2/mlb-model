@@ -32,8 +32,12 @@ TODAY = os.environ.get("MLB_DATE", date.today().isoformat())  # YYYY-MM-DD
 # The Odds API (https://the-odds-api.com) -- sign up for free/pro tier
 ODDS_API_KEY = os.environ.get("ODDS_API_KEY", "YOUR_ODDS_API_KEY")
 
-# Weather API (optional -- OpenWeatherMap or Visual Crossing)
-WEATHER_API_KEY = os.environ.get("WEATHER_API_KEY", "YOUR_WEATHER_API_KEY")
+# Weather: Open-Meteo (free, no API key required)
+# For pre-game forecasts: https://api.open-meteo.com/v1/forecast
+# For historical backtesting: https://archive-api.open-meteo.com/v1/archive
+# For completed games: prefer MLB Stats API gameData.weather (actual conditions)
+OPEN_METEO_FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
+OPEN_METEO_ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
 
 # -- ESPN API (unofficial, no key needed) ------------------------------
 ESPN_SCOREBOARD_URL = (
@@ -44,14 +48,21 @@ ESPN_TEAMS_URL = (
 )
 
 # -- MLB Stats API (official, no key needed) ---------------------------
+# Python wrapper: pip install MLB-StatsAPI (toddrob99)
+# Key endpoints: /schedule, /game/{pk}/feed/live, /game/{pk}/linescore, /game/{pk}/boxscore
+# Game feed returns: linescore, boxscore, plays, umpires, weather, venue, probable pitchers
 MLB_API_BASE = "https://statsapi.mlb.com/api/v1"
 
 # -- The Odds API -------------------------------------------------------
 ODDS_API_BASE = "https://api.the-odds-api.com/v4"
 ODDS_SPORT = "baseball_mlb"
 ODDS_REGIONS = "us"
-# Full-game + derivative markets. h2h_h1/totals_h1 = first 5 innings.
-ODDS_MARKETS = "h2h,spreads,totals,h2h_h1,totals_h1"
+# Full-game + derivative markets.
+# NOTE: MLB uses _1st_N_innings format, NOT h2h_h1/totals_h1 (those are wrong).
+ODDS_MARKETS_FULL = "h2h,spreads,totals"                         # Full-game: ML, run line, O/U
+ODDS_MARKETS_F5 = "h2h_1st_5_innings,totals_1st_5_innings"       # First 5 innings: ML, O/U
+ODDS_MARKETS_NRFI = "totals_1st_1_innings"                       # 1st inning O/U (0.5 = NRFI)
+ODDS_MARKETS_ALL = f"{ODDS_MARKETS_FULL},{ODDS_MARKETS_F5},{ODDS_MARKETS_NRFI}"
 
 # -- Model parameters ---------------------------------------------------
 # XGBoost defaults (tuned via Optuna in 06b_tune_hyperparams.py)

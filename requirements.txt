@@ -11,8 +11,11 @@ boruta>=0.3
 optuna>=3.4.0
 
 # Data sources
-pybaseball>=2.3.0
+pybaseball>=2.3.0           # Statcast + Baseball Reference (FanGraphs funcs broken as of late 2025)
+MLB-StatsAPI>=1.7.0         # Official MLB Stats API wrapper (toddrob99) — schedule, linescore, boxscore
 requests>=2.31.0
+# NOTE: For FanGraphs data, use baseballr (R) or pybaseballstats as fallback
+# pip install pybaseballstats  # Newer alternative, Polars-based (optional)
 
 # Data processing
 pandas>=2.1.0
