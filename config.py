@@ -50,7 +50,8 @@ MLB_API_BASE = "https://statsapi.mlb.com/api/v1"
 ODDS_API_BASE = "https://api.the-odds-api.com/v4"
 ODDS_SPORT = "baseball_mlb"
 ODDS_REGIONS = "us"
-ODDS_MARKETS = "h2h,spreads,totals"  # h2h = moneyline, spreads = run line
+# Full-game + derivative markets. h2h_h1/totals_h1 = first 5 innings.
+ODDS_MARKETS = "h2h,spreads,totals,h2h_h1,totals_h1"
 
 # -- Model parameters ---------------------------------------------------
 # XGBoost defaults (tuned via Optuna in 06b_tune_hyperparams.py)
@@ -79,9 +80,17 @@ XGBOOST_PARAMS_TOTAL = {
 }
 
 # Edge detection thresholds (will be calibrated after initial backtesting)
+# Full-game markets
 ML_EDGE_THRESHOLD = 0.03       # 3% probability edge for moneyline plays
 RUNLINE_EDGE_THRESHOLD = 2.0   # 2.0 point edge for run line plays (mirroring CBB spread)
 TOTAL_EDGE_THRESHOLD = 1.5     # 1.5 run edge for totals
+# First 5 inning markets
+F5_ML_EDGE_THRESHOLD = 0.03    # 3% probability edge for F5 moneyline
+F5_TOTAL_EDGE_THRESHOLD = 1.0  # 1.0 run edge for F5 totals (smaller range)
+# NRFI/YRFI (binary — edge is probability difference)
+NRFI_EDGE_THRESHOLD = 0.05     # 5% probability edge for NRFI/YRFI
+# Team totals
+TEAM_TOTAL_EDGE_THRESHOLD = 1.0  # 1.0 run edge for team totals
 
 # Moneyline unit tiers (by probability edge)
 ML_UNIT_TIERS = [
@@ -117,8 +126,50 @@ DRAWDOWN_PAUSE = 0.25            # Pause betting at 25% drawdown from peak
 MAX_ML_PRICE = -250              # Skip moneylines steeper than -250
 MIN_IMPLIED_PROB = 0.40          # Skip if market implied prob < 40% (longshots)
 
-# Margin model RMSE (set after training -- used for margin-to-prob conversion)
-MARGIN_MODEL_RMSE = None         # Will be set after first walk-forward run
+# Model RMSEs (set after training -- used for margin-to-prob conversion)
+MARGIN_MODEL_RMSE = None         # Full-game margin model
+TOTAL_MODEL_RMSE = None          # Full-game total model
+F5_MARGIN_MODEL_RMSE = None      # First 5 innings margin model
+F5_TOTAL_MODEL_RMSE = None       # First 5 innings total model
+
+# XGBoost params for derivative models (tuned separately via Optuna)
+XGBOOST_PARAMS_F5_MARGIN = {
+    "n_estimators": 350,
+    "max_depth": 5,
+    "learning_rate": 0.03,
+    "subsample": 0.8,
+    "colsample_bytree": 0.7,
+    "min_child_weight": 5,
+    "reg_alpha": 0.1,
+    "reg_lambda": 1.0,
+    "random_state": 42,
+}
+
+XGBOOST_PARAMS_F5_TOTAL = {
+    "n_estimators": 350,
+    "max_depth": 5,
+    "learning_rate": 0.03,
+    "subsample": 0.8,
+    "colsample_bytree": 0.7,
+    "min_child_weight": 5,
+    "reg_alpha": 0.1,
+    "reg_lambda": 1.0,
+    "random_state": 42,
+}
+
+XGBOOST_PARAMS_NRFI = {
+    "n_estimators": 300,
+    "max_depth": 4,
+    "learning_rate": 0.03,
+    "subsample": 0.8,
+    "colsample_bytree": 0.7,
+    "min_child_weight": 10,   # Higher — small target, need regularization
+    "reg_alpha": 0.5,
+    "reg_lambda": 2.0,
+    "objective": "binary:logistic",
+    "eval_metric": "logloss",
+    "random_state": 42,
+}
 
 # Odds API book keys -> display names
 BOOK_DISPLAY_NAMES = {

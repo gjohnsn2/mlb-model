@@ -178,9 +178,101 @@ Specific pitcher-vs-team and lineup-vs-pitcher interactions.
 9. Rolling form (win% last 10/20)
 10. Platoon splits
 
-## Phase 3 (Advanced, If Edge Exists)
-11. Lineup-level features
-12. Batter-pitcher matchup history
-13. Umpire tendencies
-14. Travel and rest patterns
-15. Bullpen fatigue modeling (complex)
+## Phase 3 (Derivative Markets)
+11. **F5 model features** — SP-only feature set, no bullpen
+12. **NRFI features** — SP 1st-inning splits, leadoff hitter stats, umpire K-zone
+13. **Team total features** — asymmetric (one team's offense vs opponent SP+bullpen)
+
+## Phase 4 (Advanced, If Edge Exists in Any Market)
+14. Lineup-level features (confirmed lineup wRC+ vs team average)
+15. Batter-pitcher matchup history
+16. Umpire tendencies (strike zone, run environment)
+17. Travel and rest patterns
+18. Bullpen fatigue modeling (complex)
+
+---
+
+## Derivative Market Research
+
+### First 5 Innings (F5) — ML & Total
+F5 markets isolate the starting pitcher matchup. The bullpen is irrelevant.
+Books may set F5 lines with less precision than full-game lines.
+
+**Key hypotheses:**
+- [ ] F5 markets are softer than full-game because less sharp money targets them
+- [ ] SP-only features should have MORE predictive power for F5 than full-game
+- [ ] Bullpen-dependent features (fatigue, closer avail) are pure noise for F5
+- [ ] Park factors still matter (5 innings is enough for park effects to manifest)
+
+**Data requirements:**
+- 5-inning box scores (score after 5 innings) for historical games
+- F5 odds from Odds API (`h2h_h1`, `totals_h1` market keys)
+- SP pitch count / efficiency metrics (pitchers who go 5+ vs those pulled early)
+
+**Modeling approach:**
+- Separate F5 margin and F5 total models
+- Feature set: SP stats + batting stats + park factors + weather (NO bullpen)
+- Boruta will confirm — expect bullpen features auto-rejected
+- Separate walk-forward validation and backtest
+
+### NRFI / YRFI (No Run First Inning)
+Binary outcome: did either team score in the top or bottom of the 1st inning?
+Historically ~55-60% of MLB games have a scoreless 1st inning (NRFI).
+
+**Key hypotheses:**
+- [ ] SP first-inning splits are more predictive than full-season ERA
+- [ ] Leadoff hitter OBP and top-of-order quality drive 1st-inning scoring
+- [ ] Umpire tendencies (wide zone = more Ks = more NRFI) may add signal
+- [ ] NRFI market is less efficient because it's a "prop" — recreational money dominates
+- [ ] Park factor matters less for 1 inning (smaller sample for park to manifest)
+
+**Data requirements:**
+- First-inning scoring data per game (did runs score in top 1st? bottom 1st?)
+- SP first-inning ERA / OBP-against / K-rate (split by inning)
+- Leadoff hitter stats (OBP, K%, SB tendency)
+- Batting order positions 1-3 stats
+- NRFI/YRFI odds (may need to scrape from individual books — not standard in Odds API)
+
+**Modeling approach:**
+- XGBoost binary classifier (objective: binary:logistic)
+- Target: 1 = NRFI (no runs in first inning), 0 = YRFI
+- Very different feature set from margin/total models
+- Small feature space — avoid overfitting on niche stats
+
+### Team Totals
+Individual team over/under (e.g., Yankees over 4.5 runs). Asymmetric model —
+one team's offense vs the opposing team's pitching.
+
+**Key hypotheses:**
+- [ ] Team total markets are softer than game totals (less liquid, less sharp action)
+- [ ] Can exploit mismatches where full-game total is right but allocation is wrong
+  (e.g., total 8.5 but model says 6-2 split, not 4.5-4)
+- [ ] Weather/park effects may be priced into game total but not team totals correctly
+
+**Data requirements:**
+- Individual team scoring per game (already in game results)
+- Team total odds from Odds API or individual books
+- Same features as full-game but applied asymmetrically
+
+**Modeling approach:**
+- Predict each team's runs separately, not the margin
+- Compare team prediction to team total line
+- May cannibalize full-game total model or complement it
+
+### Alternate Run Lines
+Non-standard spreads like -1.5, +1.5, -2.5, etc. with heavier juice.
+
+**Key hypotheses:**
+- [ ] When margin model has high confidence, alt run lines offer better EV
+- [ ] -1.5 for favorites the model loves; +2.5 for dogs the model likes
+- [ ] No separate model needed — derived from margin model's distribution calibration
+- [ ] Juice is heavier but edges may be wider (books set alts from full-game line)
+
+**Data requirements:**
+- Alternate run line odds from Odds API (`alternate_spreads`)
+- Good calibration of margin model tails (isotonic important here)
+
+**Modeling approach:**
+- No new model — use margin model's predicted distribution
+- P(home wins by > 1.5) from calibrated margin distribution
+- Compare to implied probability from alt run line odds
