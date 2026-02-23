@@ -1,0 +1,31 @@
+team,abbrev,run_factor,hr_factor,hit_factor
+Colorado Rockies,COL,1.38,1.36,1.15
+Boston Red Sox,BOS,1.12,1.06,1.07
+Cincinnati Reds,CIN,1.10,1.22,1.03
+Texas Rangers,TEX,1.08,1.15,1.02
+Arizona Diamondbacks,ARI,1.06,1.08,1.04
+Chicago Cubs,CHC,1.05,1.12,1.01
+Philadelphia Phillies,PHI,1.04,1.10,1.00
+Toronto Blue Jays,TOR,1.04,1.08,1.01
+Minnesota Twins,MIN,1.03,1.06,1.00
+Milwaukee Brewers,MIL,1.02,1.08,0.99
+New York Yankees,NYY,1.02,1.12,0.98
+Atlanta Braves,ATL,1.01,1.05,1.00
+Baltimore Orioles,BAL,1.00,1.08,0.98
+Los Angeles Angels,LAA,1.00,0.98,1.01
+Houston Astros,HOU,0.99,1.02,0.99
+Detroit Tigers,DET,0.99,0.92,1.02
+Washington Nationals,WSH,0.98,1.02,0.98
+Cleveland Guardians,CLE,0.98,0.94,1.00
+Kansas City Royals,KCR,0.97,0.90,1.02
+Pittsburgh Pirates,PIT,0.97,0.85,1.00
+Seattle Mariners,SEA,0.96,0.92,0.99
+Chicago White Sox,CWS,0.96,1.04,0.95
+St. Louis Cardinals,STL,0.95,0.88,0.99
+Los Angeles Dodgers,LAD,0.95,0.92,0.98
+San Diego Padres,SDP,0.94,0.86,0.98
+New York Mets,NYM,0.93,0.90,0.97
+Tampa Bay Rays,TBR,0.93,0.88,0.97
+San Francisco Giants,SFG,0.92,0.80,0.96
+Miami Marlins,MIA,0.91,0.82,0.97
+Oakland Athletics,OAK,0.90,0.78,0.96

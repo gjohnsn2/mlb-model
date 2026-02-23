@@ -1,0 +1,28 @@
+# MLB Betting Model — Python Dependencies
+# Install: pip install -r requirements.txt
+
+# Core ML
+xgboost>=2.0.0
+scikit-learn>=1.3.0
+shap>=0.44.0
+boruta>=0.3
+
+# Hyperparameter tuning
+optuna>=3.4.0
+
+# Data sources
+pybaseball>=2.3.0
+requests>=2.31.0
+
+# Data processing
+pandas>=2.1.0
+numpy>=1.25.0
+
+# Visualization
+matplotlib>=3.8.0
+
+# Statistics
+scipy>=1.11.0
+
+# Utilities
+tabulate>=0.9.0

@@ -1,0 +1,17 @@
+.env
+__pycache__/
+*.pyc
+*.pkl
+data/raw/
+data/processed/
+data/predictions/
+data/tracking/*
+!data/tracking/CLAUDE.md
+data/historical/
+data/lines/
+reports/
+models/trained/*.pkl
+models/trained/*.png
+*.log
+.DS_Store
+notebooks/.ipynb_checkpoints/
