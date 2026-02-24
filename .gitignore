@@ -12,6 +12,9 @@ data/lines/
 reports/
 models/trained/*.pkl
 models/trained/*.png
+models/mlb_shap_*.png
+models/mlb_oof_*.csv
+models/mlb_backtest_results.csv
 *.log
 .DS_Store
 notebooks/.ipynb_checkpoints/

@@ -1,0 +1,13 @@
+{
+  "margin_features": [
+    "consensus_total",
+    "market_implied_prob",
+    "market_logit",
+    "num_books"
+  ],
+  "total_features": [
+    "consensus_total",
+    "num_books",
+    "temp"
+  ]
+}

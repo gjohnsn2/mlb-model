@@ -1,0 +1,100 @@
+MLB PINNACLE VALIDATION REPORT
+======================================================================
+Generated: 2026-02-23 21:21
+OOF margin RMSE: 4.46
+Games with both consensus + Pinnacle H2H: 8613
+Edge method: Calibrated margin-space (model rescaled to market std)
+
+Season Coverage:
+  2020: 511 games
+  2021: 1,498 games
+  2022: 1,619 games
+  2023: 1,733 games
+  2024: 1,709 games
+  2025: 1,543 games
+
+======================================================================
+MARKET LINE COMPARISON (consensus vs Pinnacle)
+======================================================================
+  Consensus implied margin std:  1.504
+  Pinnacle implied margin std:   1.342
+  Correlation (cons vs pinn):     0.7322
+  Mean |margin diff|:             0.345 runs
+  Median |margin diff|:           0.058 runs
+
+======================================================================
+MONEYLINE BETS: CONSENSUS vs PINNACLE (same game set)
+======================================================================
+ Threshold |            --- CONSENSUS --- |             --- PINNACLE ---
+           |  Bets        W-L   Win%     ROI  p-val |  Bets        W-L   Win%     ROI  p-val
+--------------------------------------------------------------------------------
+  >= 0.00 |  8500  4282-4218  50.4%  +18.4% 0.000 |  8613  4348-4265  50.5%   +3.5% 0.002
+  >= 0.25 |  5677  2856-2821  50.3%  +28.8% 0.000 |  5794  2941-2853  50.8%   +5.4% 0.000
+  >= 0.50 |  3499  1774-1725  50.7%  +49.3% 0.000 |  3642  1842-1800  50.6%   +6.9% 0.000 <--
+  >= 0.75 |  2168  1070-1098  49.4%  +79.3% 0.000 |  2269  1149-1120  50.6%  +10.2% 0.000
+  >= 1.00 |  1316    622-694  47.3% +132.5% 0.000 |  1417    728-689  51.4%  +18.0% 0.000
+  >= 1.50 |   500    216-284  43.2% +360.4% 0.000 |   683    355-328  52.0%  +29.9% 0.000
+  >= 2.00 |   238     91-147  38.2% +761.8% 0.000 |   409    209-200  51.1%  +41.0% 0.000
+
+======================================================================
+UNDERDOG % BY THRESHOLD
+======================================================================
+ Threshold |  Cons Dog% |  Pinn Dog%
+----------------------------------------
+  >= 0.00 |        49% |        58%
+  >= 0.25 |        48% |        58%
+  >= 0.50 |        46% |        59%
+  >= 0.75 |        45% |        60%
+  >= 1.00 |        46% |        65%
+  >= 1.50 |        57% |        71%
+  >= 2.00 |        74% |        77%
+
+======================================================================
+ML BY SEASON (>= 0.5 runs): CONSENSUS vs PINNACLE
+======================================================================
+ Season |          --- CONSENSUS --- |           --- PINNACLE ---
+        |  Bets        W-L   Win%     ROI |  Bets        W-L   Win%     ROI
+------------------------------------------------------------------------
+   2020 |   256    128-128  50.0%  +36.5% |   289    150-139  51.9%  +15.1%
+   2021 |   597    323-274  54.1%  +25.9% |   667    345-322  51.7%  +12.9%
+   2022 |   650    335-315  51.5%  +23.3% |   698    359-339  51.4%  +10.4%
+   2023 |   700    366-334  52.3%  +64.0% |   711    380-331  53.4%   +9.1%
+   2024 |   630    294-336  46.7%  +70.9% |   646    288-358  44.6%   -7.6%
+   2025 |   666    328-338  49.2%  +64.9% |   631    320-311  50.7%   +5.4%
+
+======================================================================
+TOTAL LINE COMPARISON (consensus vs Pinnacle)
+======================================================================
+  Games with both totals: 8475
+  Consensus total mean:   8.49
+  Pinnacle total mean:    8.49
+  Correlation:            0.7628
+  Mean |diff|:            0.34 runs
+  Median |diff|:          0.00 runs
+  Consensus MAE vs actual: 3.31
+  Pinnacle MAE vs actual:  3.40
+
+======================================================================
+MODEL DIAGNOSTICS (overlapping game set)
+======================================================================
+Model pred std:           1.267
+Cons market margin std:   1.504
+Pinn market margin std:   1.342
+Actual margin std:        4.432
+corr(model, actual):      0.212
+corr(consensus, actual):  0.203
+corr(pinnacle, actual):   0.212
+corr(cons_edge, cons_residual):  0.108
+corr(pinn_edge, pinn_residual):  0.114
+
+======================================================================
+NOTES
+======================================================================
+- Only games with BOTH consensus AND Pinnacle H2H are compared
+- Edges are computed independently for each line source
+- Each calibration rescales model to its own market's std
+- ML bets use actual H2H odds from the respective book
+- Pinnacle data from Odds API 'eu' region (H2H + totals)
+- Consensus data from Odds API 'us' region (median of 15+ books)
+- Margin RMSE: 4.46
+- Pinnacle closing lines = latest available fetch per game

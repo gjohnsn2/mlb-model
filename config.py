@@ -18,7 +18,7 @@ PREDICTIONS_DIR = DATA_DIR / "predictions"
 TRACKING_DIR = DATA_DIR / "tracking"
 HISTORICAL_DIR = DATA_DIR / "historical"
 LINES_DIR = DATA_DIR / "lines"
-MODELS_DIR = PROJECT_DIR / "models" / "trained"
+MODELS_DIR = PROJECT_DIR / "models"
 MODELS_ROOT = PROJECT_DIR / "models"
 REPORTS_DIR = PROJECT_DIR / "reports"
 
@@ -274,3 +274,97 @@ logging.basicConfig(
 
 def get_logger(name):
     return logging.getLogger(name)
+
+
+# ══════════════════════════════════════════════════════════════
+# MLB Walk-Forward & Training Configuration
+# ══════════════════════════════════════════════════════════════
+
+# Walk-forward test seasons (train on all prior years)
+# Data starts 2015. Test from 2017 (min 2 years training).
+MLB_TEST_SEASONS = [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+
+# XGBoost defaults for MLB walk-forward training
+MLB_XGBOOST_PARAMS = {
+    "n_estimators": 300,
+    "max_depth": 5,
+    "learning_rate": 0.05,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "min_child_weight": 3,
+    "random_state": 42,
+}
+
+# Sample weighting — shorter half-life than CBB (fewer seasons, faster regime change)
+MLB_SAMPLE_WEIGHT_HALF_LIFE = 3
+
+# Edge detection thresholds
+MLB_ML_PROB_THRESHOLD = 0.05       # 5% probability edge for ML bet
+MLB_TOTAL_EDGE_THRESHOLD = 1.5     # 1.5 runs for total bet
+
+# Placeholder RMSE (updated after training)
+MLB_MARGIN_MODEL_RMSE = 4.5
+
+# ML unit tiers (by probability edge)
+MLB_ML_UNIT_TIERS = [
+    (0.20, 3.0, "3u"),   # prob edge >= 20%: max conviction
+    (0.15, 2.0, "2u"),   # prob edge >= 15%: high conviction
+    (0.10, 1.5, "1.5u"), # prob edge >= 10%: standard+
+    (0.05, 1.0, "1u"),   # prob edge >= 5%: production threshold
+]
+
+# 69 candidate features for MLB models
+MLB_CANDIDATE_FEATURES = [
+    # SP season stats (14 diff features)
+    "sp_era_diff", "sp_whip_diff", "sp_fip_diff", "sp_xfip_diff",
+    "sp_k_pct_diff", "sp_bb_pct_diff", "sp_avg_ip_diff",
+    "sp_xwoba_diff", "sp_hard_hit_pct_diff", "sp_barrel_pct_diff",
+    "sp_groundball_pct_diff", "sp_flyball_pct_diff", "sp_whiff_rate_diff",
+    "sp_starts_diff",
+    # SP recency (last 3 starts, 14 diff features)
+    "sp_era_last3_diff", "sp_whip_last3_diff", "sp_fip_last3_diff",
+    "sp_k_pct_last3_diff", "sp_xwoba_last3_diff",
+    "sp_hard_hit_pct_last3_diff", "sp_barrel_pct_last3_diff",
+    "sp_groundball_pct_last3_diff", "sp_flyball_pct_last3_diff",
+    "sp_whiff_rate_last3_diff",
+    # Batting (6 diff features)
+    "batting_avg_diff", "hr_rate_diff", "k_rate_diff",
+    "bb_rate_diff", "iso_diff", "runs_per_game_diff",
+    # Market-derived (4 features)
+    "market_implied_prob", "market_logit",
+    "consensus_total", "num_books",
+    # Context (7 features)
+    "is_postseason", "temp",
+    "park_factor", "umpire_runs_factor", "is_doubleheader", "is_dome", "wind_out_mph",
+    # Rest/Workload (3 diff features)
+    "sp_rest_days_diff", "sp_season_ip_diff", "team_rest_days_diff",
+    # Momentum (2 diff features)
+    "team_win_pct_10_diff", "team_run_diff_10_diff",
+    # Bullpen (3 diff features)
+    "bullpen_era_diff", "bullpen_whip_diff", "bullpen_usage_diff",
+    # Bullpen availability — game-day state (4 diff features)
+    "bp_availability_score_diff", "bp_high_leverage_rested_diff",
+    "bp_pitches_3d_diff", "bp_arms_unavailable_diff",
+    # Travel & fatigue (5 diff features)
+    "travel_distance_diff", "road_trip_length_diff",
+    "total_distance_7d_diff", "tz_changes_7d_diff", "games_in_7d_diff",
+    # Schedule context (3 features)
+    "is_interleague", "series_game_num", "post_allstar_diff",
+    # Lineup composition (8 diff features, requires batter data)
+    "lineup_ops_diff", "lineup_power_diff", "lineup_k_rate_diff",
+    "lineup_obp_diff", "platoon_advantage_pct_diff",
+    "star_missing_ops_diff", "lineup_continuity_diff",
+    "lineup_hot_streak_diff",
+]
+
+def _load_mlb_selected_features():
+    """Load Boruta-selected features from models/mlb_selected_features.json."""
+    path = MODELS_DIR / "mlb_selected_features.json"
+    if path.exists():
+        with open(path) as f:
+            data = json.load(f)
+        return data.get("margin_features", MLB_CANDIDATE_FEATURES), \
+               data.get("total_features", MLB_CANDIDATE_FEATURES)
+    return MLB_CANDIDATE_FEATURES, MLB_CANDIDATE_FEATURES
+
+MLB_MARGIN_FEATURES, MLB_TOTAL_FEATURES = _load_mlb_selected_features()
