@@ -16,9 +16,9 @@ You are the pressure test orchestrator for a Major League Baseball betting model
 
 ## Context
 - The model is in INITIAL RESEARCH phase — pressure tests focus on methodology and data quality
-- Architecture ported from a validated CBB model (65%+ win rate)
+- XGBoost + walk-forward + Boruta architecture, validated methodology
 - MLB-specific concerns: starting pitcher modeling, park factors, weather effects, variable ML juice
-- The prompt library for MLB is being built — use the CBB library as a template but adapt for baseball
+- The prompt library for MLB is being built — build the prompt library for baseball-specific scenarios
 
 ## MLB-Specific Pressure Test Prompts
 

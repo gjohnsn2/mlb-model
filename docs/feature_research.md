@@ -3,8 +3,7 @@
 ## Status: INITIAL RESEARCH
 
 This document tracks the feature research process for the MLB betting model.
-Every feature must be justified for baseball specifically -- no blind copying
-from the CBB model.
+Every feature must be justified for baseball specifically.
 
 ## Data Sources Available
 
@@ -146,7 +145,7 @@ Market consensus as a feature (the market knows things the model doesn't).
 - Number of books posting lines
 
 **Research questions:**
-- [ ] Does the consensus ML add predictive value to the model? (likely yes, from CBB experience)
+- [ ] Does the consensus ML add predictive value to the model? (likely yes, based on general modeling experience)
 - [ ] How correlated are model predictions with market implied probs?
 - [ ] Can line movement be captured as a feature?
 

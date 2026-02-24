@@ -5,7 +5,7 @@ Builds training data from historical game results, pitcher stats, team stats,
 and odds data. Produces a single CSV with one row per game and all features
 computed from pre-game data only.
 
-KEY PRINCIPLE (from CBB): No look-ahead bias. Every feature must use data
+KEY PRINCIPLE: No look-ahead bias. Every feature must use data
 available BEFORE the game being predicted. Game-level stats are used only
 for computing rolling averages of PRIOR games.
 

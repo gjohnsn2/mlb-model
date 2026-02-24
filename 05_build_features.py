@@ -26,7 +26,7 @@ log = get_logger("05_features")
 
 # -- Team name matching -----------------------------------------------
 # MLB has only 30 teams, but ESPN, Odds API, FanGraphs, and Baseball Reference
-# all use slightly different names. This map is much simpler than CBB's 450+ entries.
+# all use slightly different names. 30 MLB teams means a manageable crosswalk.
 TEAM_NAME_MAP = {
     # ESPN display names -> canonical
     "Arizona Diamondbacks": "Arizona Diamondbacks",

@@ -17,7 +17,7 @@ Feature Categories:
 
 Architecture note: Each feature must be computable from data available BEFORE
 the game being predicted. No in-game or post-game data may be used as features.
-This is inherited from the CBB model's hard-won leakage fix.
+This is critical for preventing look-ahead bias.
 """
 
 import math

@@ -37,7 +37,7 @@ Sources use different conventions:
 - FanGraphs: Abbreviations ("ARI") or full names
 - Baseball Reference: Abbreviations ("ARI")
 
-The crosswalk is much simpler than CBB (30 teams vs. 350+).
+The crosswalk is manageable with only 30 MLB teams.
 
 ## Key Data Quirks
 - **Double-headers**: Two games same day, same teams — must be tracked as separate games with separate game_ids
@@ -45,4 +45,4 @@ The crosswalk is much simpler than CBB (30 teams vs. 350+).
 - **SP scratches**: Starting pitcher may change after lines are posted. Must verify before betting.
 - **7-inning double-headers**: Existed 2020-2022 only. All 9 innings from 2023+.
 - **Universal DH**: Since 2022. Historical data before 2022 has NL pitchers batting.
-- **Season = calendar year**: 2026 season = 2026 (unlike CBB where 2025-26 = 2026).
+- **Season = calendar year**: 2026 season = 2026.

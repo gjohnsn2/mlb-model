@@ -4,12 +4,12 @@
 Stores backtest results from `10_backtest.py` — the historical profitability
 analysis that determines whether the model has a real edge.
 
-## Key Differences from CBB Backtest
+## MLB Backtest Design
 - **Variable juice**: MLB moneylines have variable odds (-110 to -250+).
-  P&L must use actual odds, not flat -110. This is the most critical difference.
-- **Market efficiency**: MLB is a more efficient market than CBB. Expected
-  edges will be smaller (3-8% vs. CBB's 10-15%).
-- **Sample size per season**: 2,430 games (vs. ~5,500 CBB). Adequate for
+  P&L must use actual odds, not flat -110.
+- **Market efficiency**: MLB is a highly efficient market. Expected
+  edges are small (3-8% ROI range).
+- **Sample size per season**: 2,430 games per season. Adequate for
   statistical power but each season has fewer bet opportunities.
 - **Starting pitcher**: SP information quality varies. Early-season SPs have
   fewer starts and noisier statistics.

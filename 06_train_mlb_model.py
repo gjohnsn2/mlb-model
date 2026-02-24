@@ -10,7 +10,7 @@ Walk-forward design (4 folds, expanding window):
   Fold 3: Train 2019-2023, Test 2024
   Fold 4: Train 2019-2024, Test 2025
 
-Season = calendar year (no Nov crossover like CBB).
+Season = calendar year.
 
 Critical data insight: MLB consensus_spread is the runline (+/-1.5 in 88%
 of games) — NOT a true spread. The market signal comes from H2H moneyline

@@ -8,7 +8,7 @@ Objective: minimize walk-forward RMSE on games with odds data,
 weighted by recency. Optimizes for the use case that matters --
 beating the market on games we actually bet on.
 
-Ported from CBB pipeline with MLB-specific parameter ranges.
+MLB-specific parameter ranges and search spaces.
 
 Outputs:
   models/configs/tuned_params.json

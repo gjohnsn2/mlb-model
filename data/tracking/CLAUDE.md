@@ -6,7 +6,7 @@
 - `performance.csv`: Game-level evaluation (predictions vs. actual results)
 - `monitoring.csv`: Rolling metrics, PSI scores, alert history
 
-## Backtest Methodology (Ported from CBB)
+## Backtest Methodology
 - Walk-forward validation with per-fold Boruta feature selection
 - No look-ahead: features use only pre-game data
 - Historical odds from The Odds API (consensus = median across books)
@@ -22,7 +22,7 @@
 - `11_monitor.py` computes rolling metrics and fires alerts
 
 ## ML P&L Calculation
-Unlike CBB (flat -110 spread bets), MLB P&L requires actual odds:
+MLB P&L requires actual moneyline odds (not flat -110):
 - Underdog (+150): Win $150 on $100 bet. Profit = units * (odds/100)
 - Favorite (-150): Win $100 on $150 bet. Profit = units * (100/abs(odds))
 - Loss: -units regardless of odds

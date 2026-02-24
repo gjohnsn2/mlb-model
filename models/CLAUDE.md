@@ -33,7 +33,7 @@ models/
 - Production model: trained on ALL data with consensus features
 
 ## Calibration
-- Tail-aware isotonic calibration (ported from CBB)
+- Tail-aware isotonic calibration
 - Core 5th-95th percentile: isotonic regression
 - Tails: linear regression for extremes
 - Fitted on OOF walk-forward predictions (truly out-of-sample)

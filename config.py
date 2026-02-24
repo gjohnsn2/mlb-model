@@ -93,7 +93,7 @@ XGBOOST_PARAMS_TOTAL = {
 # Edge detection thresholds (will be calibrated after initial backtesting)
 # Full-game markets
 ML_EDGE_THRESHOLD = 0.03       # 3% probability edge for moneyline plays
-RUNLINE_EDGE_THRESHOLD = 2.0   # 2.0 point edge for run line plays (mirroring CBB spread)
+RUNLINE_EDGE_THRESHOLD = 2.0   # 2.0 point edge for run line plays
 TOTAL_EDGE_THRESHOLD = 1.5     # 1.5 run edge for totals
 # First 5 inning markets
 F5_ML_EDGE_THRESHOLD = 0.03    # 3% probability edge for F5 moneyline
@@ -196,7 +196,7 @@ BOOK_DISPLAY_NAMES = {
 
 # Sample weighting -- exponential decay by season
 SAMPLE_WEIGHT_HALF_LIFE = 3  # years; weight halves every N seasons back
-# MLB changes faster than CBB (rule changes, juiced ball era, etc.)
+# MLB changes quickly (rule changes, juiced ball era, etc.)
 
 # -- Feature columns ----------------------------------------------------
 # All candidate features (from feature_engine.py)
@@ -295,7 +295,7 @@ MLB_XGBOOST_PARAMS = {
     "random_state": 42,
 }
 
-# Sample weighting — shorter half-life than CBB (fewer seasons, faster regime change)
+# Sample weighting — shorter half-life (fewer seasons of data, faster regime change)
 MLB_SAMPLE_WEIGHT_HALF_LIFE = 3
 
 # Edge detection thresholds

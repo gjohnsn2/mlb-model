@@ -19,8 +19,6 @@ models/selected_features.json (output of 05b_select_features.py).
 
 Isotonic calibrators are fitted on walk-forward OOF predictions.
 
-Ported from CBB pipeline -- same architecture, MLB-specific parameters.
-
 Outputs: models/trained/margin_model.pkl, models/trained/total_model.pkl,
          models/trained/shap_margin.png, models/trained/shap_total.png,
          models/walkforward_report.txt, models/training_metrics.json
@@ -77,7 +75,6 @@ def compute_sample_weights(seasons, half_life=SAMPLE_WEIGHT_HALF_LIFE):
 def fit_tail_aware_calibrator(predictions, actuals, name="model"):
     """
     Tail-aware calibration: isotonic in the core + linear regression at tails.
-    Ported directly from CBB pipeline.
     """
     predictions = np.array(predictions, dtype=float)
     actuals = np.array(actuals, dtype=float)

@@ -4,7 +4,6 @@
 Compares production model vs. walk-forward fold performance.
 Useful for detecting overfitting or model degradation.
 
-Ported from CBB pipeline.
 """
 
 import sys

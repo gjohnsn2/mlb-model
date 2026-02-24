@@ -7,7 +7,7 @@ Change Log at the bottom.
 
 ## What This Project Is
 A Major League Baseball gambling model targeting full-game moneyline and totals.
-Built using the same XGBoost + walk-forward + Boruta architecture as the CBB model.
+Built using XGBoost + walk-forward validation + Boruta feature selection.
 
 **Current phase**: RESEARCH COMPLETE — model is purely market-driven.
 No baseball feature (SP, batting, bullpen, park, weather, lineup) survives Boruta.
@@ -185,7 +185,7 @@ Pinnacle ROI by season (>= 0.5 runs):
 ## Change Log
 | Date | Change | Impact |
 |------|--------|--------|
-| 2026-02-22 | Repository bootstrapped from CBB template | Initial structure |
+| 2026-02-22 | Repository created | Initial structure |
 | 2026-02-23 | Data source audit, MLB Stats API as backbone | Pipeline architecture |
 | 2026-02-23 | Historical data fetch (25K games, 51K pitcher logs, 51K batting logs) | Training data |
 | 2026-02-23 | Feature engineering: 53 candidate features (SP, batting, market, context, rest, momentum) | First model |

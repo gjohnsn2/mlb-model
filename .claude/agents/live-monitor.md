@@ -51,7 +51,7 @@ Review:
 - **RED:** Season ML win rate < 52%, OR drawdown exceeds 10%, OR three consecutive losing weeks
 - **PAUSE:** Drawdown hits 25% from peak
 
-Note: MLB expected win rates are LOWER than CBB (more efficient market).
+Note: MLB is a highly efficient market — expected edges are small.
 A 55% ML win rate with proper odds selection can yield 8-12% ROI.
 
 ## When RED or PAUSE Triggers:

@@ -5,7 +5,7 @@ Reads performance.csv from 09_evaluate.py and computes rolling metrics,
 feature drift (PSI), edge calibration, and fires alerts when thresholds
 are breached.
 
-Ported from CBB pipeline with MLB-specific thresholds.
+MLB-specific alert thresholds for model health and feature drift.
 
 Outputs:
   Console report (human-readable, with alerts)
@@ -24,7 +24,7 @@ from config import (
 log = get_logger("11_monitor")
 
 # -- Alert thresholds (MLB-specific) -----------------------------------
-# MLB market is more efficient than CBB — lower baseline expected
+# MLB market is highly efficient — lower baseline expected
 ML_WIN_RATE_WARNING = 0.53       # Roll-50 ML win rate < 53%
 ML_WIN_RATE_CRITICAL = 0.5238    # Below breakeven (approximate for avg ML juice)
 ML_MAE_WARNING = 5.0             # Roll-100 margin MAE (runs)

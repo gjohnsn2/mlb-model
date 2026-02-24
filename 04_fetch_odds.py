@@ -2,7 +2,7 @@
 04 -- Fetch Odds from The Odds API
 =====================================
 Pulls current moneyline, run line, and total odds from The Odds API.
-MLB's primary market is moneylines (h2h), unlike CBB where spreads dominate.
+MLB's primary market is moneylines (h2h).
 
 Markets:
   h2h: Moneyline (primary -- variable juice)

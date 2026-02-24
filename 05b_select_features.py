@@ -4,8 +4,6 @@
 Runs BorutaPy with XGBoost estimator on training data to identify
 genuinely predictive features. Separate runs for margin and total targets.
 
-Ported directly from CBB pipeline -- same methodology, different features.
-
 Outputs:
   models/selected_features.json -- {margin_features: [...], total_features: [...]}
   models/boruta_report.txt -- Human-readable selection report
