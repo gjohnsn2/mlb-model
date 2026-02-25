@@ -90,7 +90,7 @@ def fetch_lineups(game_date=None):
         log.info(f"Saved {len(df)} lineup entries to {out_path}")
 
         # Report on confirmed starters
-        confirmed = df[df["home_sp_name"].str.len() > 0 & df["away_sp_name"].str.len() > 0]
+        confirmed = df[(df["home_sp_name"].str.len() > 0) & (df["away_sp_name"].str.len() > 0)]
         log.info(f"  Confirmed both SPs: {len(confirmed)}/{len(df)} games")
 
         return df

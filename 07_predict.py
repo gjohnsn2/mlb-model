@@ -1,103 +1,66 @@
 """
-07 -- Generate Daily Predictions
-===================================
-Loads today's feature matrix + trained models.
-Outputs predictions with SHAP explanations for every game.
+07 -- Generate Daily Predictions (Lasso)
+==========================================
+Loads today's feature matrix + trained Lasso model bundle.
+Outputs raw predictions for every game.
 
 Each row includes:
-  - Model predicted margin (home perspective, positive = home favored)
-  - Model predicted total (combined runs)
-  - Derived win probability (from margin via normal CDF)
-  - Top 3 SHAP drivers for each prediction
+  - Raw model predicted margin (home perspective, positive = home favored)
+  - Raw model predicted total
+  - Top Lasso coefficient drivers
 
-Outputs: data/predictions/picks_YYYY-MM-DD.csv
+Outputs: data/predictions/picks_{TODAY}.csv
+
+Run: python3 07_predict.py
 """
 
 import sys
 import pickle
 import numpy as np
 import pandas as pd
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-from scipy.stats import norm
+from pathlib import Path
 from config import (
-    PROCESSED_DIR, PREDICTIONS_DIR, MODELS_DIR, REPORTS_DIR,
-    TODAY, MARGIN_FEATURES, TOTAL_FEATURES, MARGIN_MODEL_RMSE,
-    get_logger
+    PROCESSED_DIR, PREDICTIONS_DIR, MODELS_DIR,
+    TODAY, get_logger
 )
 
 log = get_logger("07_predict")
 
-try:
-    import xgboost as xgb
-    import shap
-except ImportError as e:
-    log.error(f"Missing package: {e}")
-    log.error("Run: pip install xgboost shap --break-system-packages")
-    sys.exit(1)
 
-
-def _apply_calibrator(calibrator, predictions):
-    """Apply calibrator -- handles both legacy and tail-aware format."""
-    if isinstance(calibrator, dict) and "iso" in calibrator:
-        result = np.empty_like(predictions)
-        lo = calibrator["lo_thresh"]
-        hi = calibrator["hi_thresh"]
-        core_mask = (predictions >= lo) & (predictions <= hi)
-        lo_mask = predictions < lo
-        hi_mask = predictions > hi
-        if core_mask.any():
-            result[core_mask] = calibrator["iso"].predict(predictions[core_mask])
-        if lo_mask.any():
-            result[lo_mask] = calibrator["lo_intercept"] + calibrator["lo_slope"] * predictions[lo_mask]
-        if hi_mask.any():
-            result[hi_mask] = calibrator["hi_intercept"] + calibrator["hi_slope"] * predictions[hi_mask]
-        return result
-    else:
-        return calibrator.predict(predictions)
-
-
-def load_model(name):
-    """Load a pickled model bundle."""
-    path = MODELS_DIR / f"{name}_model.pkl"
+def load_lasso_bundle(name):
+    """Load a trained Lasso model bundle."""
+    path = MODELS_DIR / "trained" / f"lasso_{name}_nomarket.pkl"
     if not path.exists():
         log.error(f"Model not found: {path}")
-        log.error("Run 06_train_model.py first")
+        log.error("Run 06c_train_production_lasso.py first")
         sys.exit(1)
 
     with open(path, "rb") as f:
         bundle = pickle.load(f)
 
-    log.info(f"Loaded {name} model ({bundle['metrics']['n_samples']} training samples, "
-             f"CV RMSE: {bundle['metrics']['cv_rmse_mean']:.2f})")
+    log.info(f"Loaded {name} Lasso model:")
+    log.info(f"  Trained on: {bundle['trained_on']} ({bundle['n_samples']:,} samples)")
+    log.info(f"  Alpha: {bundle['alpha']:.6f}")
+    log.info(f"  Features: {bundle['n_nonzero']}/{len(bundle['features'])} nonzero")
+    log.info(f"  OOF RMSE: {bundle['rmse']:.3f}")
     return bundle
 
 
-def get_shap_explanations(model, X, feature_names, top_n=3):
-    """Return top N SHAP drivers as human-readable strings per prediction."""
-    explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(X)
-
-    explanations = []
-    for i in range(len(X)):
-        sv = shap_values[i]
-        pairs = list(zip(feature_names, sv))
-        pairs.sort(key=lambda x: abs(x[1]), reverse=True)
-        parts = []
-        for fname, fval in pairs[:top_n]:
-            sign = "+" if fval >= 0 else ""
-            parts.append(f"{fname}: {sign}{fval:.2f}")
-        explanations.append(" | ".join(parts))
-
-    return explanations
-
-
-def margin_to_win_prob(margin, rmse):
-    """Convert predicted margin to win probability via normal CDF."""
-    if rmse is None or rmse <= 0:
-        return 0.5
-    return norm.cdf(margin / rmse)
+def get_lasso_drivers(model, feature_names, X_row, top_n=5):
+    """
+    Return top N coefficient * feature value drivers for a single prediction.
+    Shows which features are pushing the prediction and by how much.
+    """
+    contributions = model.coef_ * X_row
+    pairs = list(zip(feature_names, contributions))
+    pairs.sort(key=lambda x: abs(x[1]), reverse=True)
+    parts = []
+    for fname, contrib in pairs[:top_n]:
+        if abs(contrib) < 1e-6:
+            continue
+        sign = "+" if contrib >= 0 else ""
+        parts.append(f"{fname}: {sign}{contrib:.3f}")
+    return " | ".join(parts) if parts else "no significant drivers"
 
 
 def predict():
@@ -112,97 +75,83 @@ def predict():
     df = pd.read_csv(features_path)
     log.info(f"Loaded {len(df)} games from features")
 
-    # Load models
-    margin_bundle = load_model("margin")
-    total_bundle = load_model("total")
+    # Load Lasso bundles
+    margin_bundle = load_lasso_bundle("margin")
+    total_bundle = load_lasso_bundle("total")
 
-    margin_model = margin_bundle["model"]
+    # ── Margin predictions ──
     margin_features = margin_bundle["features"]
-    margin_cal = margin_bundle.get("calibrator")
+    margin_scaler = margin_bundle["scaler"]
+    margin_model = margin_bundle["model"]
 
-    total_model = total_bundle["model"]
+    # Select features (fill missing with 0 — matching training pipeline)
+    X_margin = df.reindex(columns=margin_features).fillna(0)
+    missing_margin = [f for f in margin_features if f not in df.columns]
+    if missing_margin:
+        log.warning(f"  Missing {len(missing_margin)} margin features (filled with 0): "
+                    f"{missing_margin[:5]}...")
+
+    X_margin_scaled = margin_scaler.transform(X_margin.values)
+    raw_margin = margin_model.predict(X_margin_scaled)
+
+    # ── Total predictions ──
     total_features = total_bundle["features"]
-    total_cal = total_bundle.get("calibrator")
+    total_scaler = total_bundle["scaler"]
+    total_model = total_bundle["model"]
 
-    # Prepare feature matrices
-    available_margin = [f for f in margin_features if f in df.columns]
-    available_total = [f for f in total_features if f in df.columns]
+    X_total = df.reindex(columns=total_features).fillna(0)
+    missing_total = [f for f in total_features if f not in df.columns]
+    if missing_total:
+        log.warning(f"  Missing {len(missing_total)} total features (filled with 0): "
+                    f"{missing_total[:5]}...")
 
-    X_margin = df[available_margin].fillna(0)
-    X_total = df[available_total].fillna(0)
+    X_total_scaled = total_scaler.transform(X_total.values)
+    raw_total = total_model.predict(X_total_scaled)
 
-    # Predict
-    raw_margin = margin_model.predict(X_margin)
-    raw_total = total_model.predict(X_total)
+    # ── Lasso driver explanations ──
+    margin_drivers = []
+    total_drivers = []
+    for i in range(len(df)):
+        margin_drivers.append(get_lasso_drivers(
+            margin_model, margin_features, X_margin_scaled[i]))
+        total_drivers.append(get_lasso_drivers(
+            total_model, total_features, X_total_scaled[i]))
 
-    # Calibrate
-    if margin_cal:
-        cal_margin = _apply_calibrator(margin_cal, raw_margin)
-    else:
-        cal_margin = raw_margin
+    # ── Assemble output ──
+    new_cols = {
+        "raw_margin_pred": np.round(raw_margin, 4),
+        "raw_total_pred": np.round(raw_total, 4),
+        "margin_rmse": margin_bundle["rmse"],
+        "total_rmse": total_bundle["rmse"],
+        "margin_drivers": margin_drivers,
+        "total_drivers": total_drivers,
+    }
+    if margin_bundle["calibration"]:
+        cal = margin_bundle["calibration"]
+        new_cols["cal_model_mean"] = cal["model_mean"]
+        new_cols["cal_model_std"] = cal["model_std"]
+        new_cols["cal_market_mean"] = cal["market_mean"]
+        new_cols["cal_market_std"] = cal["market_std"]
+    df = pd.concat([df, pd.DataFrame(new_cols, index=df.index)], axis=1)
 
-    if total_cal:
-        cal_total = _apply_calibrator(total_cal, raw_total)
-    else:
-        cal_total = raw_total
-
-    # Win probabilities (from margin model)
-    rmse = margin_bundle["metrics"]["cv_rmse_mean"]
-    win_probs = [margin_to_win_prob(m, rmse) for m in cal_margin]
-
-    # SHAP explanations
-    margin_shap = get_shap_explanations(margin_model, X_margin, available_margin)
-    total_shap = get_shap_explanations(total_model, X_total, available_total)
-
-    # Assemble output
-    df["model_margin"] = np.round(cal_margin, 2)
-    df["model_total"] = np.round(cal_total, 1)
-    df["model_win_prob_home"] = np.round(win_probs, 4)
-    df["model_win_prob_away"] = np.round(1 - np.array(win_probs), 4)
-    df["raw_margin"] = np.round(raw_margin, 2)
-    df["raw_total"] = np.round(raw_total, 1)
-    df["margin_shap"] = margin_shap
-    df["total_shap"] = total_shap
-
-    # Save
+    # ── Save ──
     PREDICTIONS_DIR.mkdir(parents=True, exist_ok=True)
     out_path = PREDICTIONS_DIR / f"picks_{TODAY}.csv"
     df.to_csv(out_path, index=False)
     log.info(f"Saved predictions to {out_path}")
 
-    # Summary
+    # ── Summary ──
     log.info(f"\nPrediction Summary:")
     for _, row in df.iterrows():
-        margin = row["model_margin"]
-        wp = row["model_win_prob_home"]
-        total = row["model_total"]
+        margin = row["raw_margin_pred"]
+        total = row["raw_total_pred"]
         home = row.get("home_team", "?")
         away = row.get("away_team", "?")
-        log.info(f"  {away} @ {home}: margin={margin:+.1f}, "
-                 f"home_prob={wp:.1%}, total={total:.1f}")
-
-    # Generate daily SHAP chart
-    try:
-        REPORTS_DIR.mkdir(parents=True, exist_ok=True)
-        fig, axes = plt.subplots(1, 2, figsize=(16, 6))
-        shap.summary_plot(
-            shap.TreeExplainer(margin_model).shap_values(X_margin),
-            X_margin, feature_names=available_margin,
-            show=False, plot_type="bar", ax=axes[0]
-        )
-        axes[0].set_title("Margin Model SHAP")
-        shap.summary_plot(
-            shap.TreeExplainer(total_model).shap_values(X_total),
-            X_total, feature_names=available_total,
-            show=False, plot_type="bar", ax=axes[1]
-        )
-        axes[1].set_title("Total Model SHAP")
-        plt.tight_layout()
-        plt.savefig(REPORTS_DIR / f"shap_daily_{TODAY}.png", dpi=150)
-        plt.close()
-        log.info(f"Saved SHAP chart to reports/shap_daily_{TODAY}.png")
-    except Exception as e:
-        log.warning(f"SHAP chart failed: {e}")
+        sp_h = row.get("home_sp_name", "TBD") or "TBD"
+        sp_a = row.get("away_sp_name", "TBD") or "TBD"
+        log.info(f"  {away} ({sp_a}) @ {home} ({sp_h}): "
+                 f"margin={margin:+.2f}, total={total:.1f}")
+        log.info(f"    Drivers: {row['margin_drivers']}")
 
     return df
 

@@ -9,10 +9,10 @@ Change Log at the bottom.
 A Major League Baseball gambling model targeting full-game moneyline and totals.
 Built using XGBoost + walk-forward validation + Boruta feature selection.
 
-**Current phase**: RESEARCH — Ridge/Lasso finds real baseball signal.
-Rate stat bug fixed (all baseball features were NaN before). Now 10 baseball
-features survive Boruta (XGBoost) and 39 survive Lasso. Ridge/Lasso beats XGBoost
-on no-market features: +7.8% ROI at >=1.5 threshold (p=0.005).
+**Current phase**: DEPLOYMENT — Daily Lasso pipeline built and ready.
+Ridge/Lasso no-market model: +7.8% ROI at >=1.5 run threshold (p=0.005).
+Daily pipeline: `run_daily.sh predict` runs schedule→lineups→odds→features→predict→edges.
+Production model trained via `06c_train_production_lasso.py`.
 Caution: 2025 season is -14.6% at that threshold (8/9 seasons positive).
 
 ## Project Structure
@@ -21,19 +21,21 @@ mlb-model/
 ├── config.py                      # Central config (paths, credentials, features, params)
 ├── feature_engine.py              # Feature engine (template, shared utility)
 ├── 00_build_mlb_historical.py     # Build training data from historical archives
+├── 05_build_features.py           # DAILY: compute features for today's games
 ├── 06_train_mlb_model.py          # XGBoost walk-forward training + Boruta
 ├── 06c_ridge_lasso_experiment.py  # Ridge/Lasso walk-forward (the breakthrough)
+├── 06c_train_production_lasso.py  # DAILY: train production Lasso + save .pkl bundle
+├── 07_predict.py                  # DAILY: Lasso predictions for today's games
+├── 08_find_edges.py               # DAILY: margin-space edge detection → betting card
 ├── 10_backtest_mlb.py             # Historical profitability backtest
-├── 10b_backtest_f5_nrfi.py        # F5 + NRFI backtest
-├── 11_segmented_backtest.py       # Segmented backtest (find profitable subsets)
-├── 12c_fetch_mlb_pinnacle.py      # Fetch Pinnacle H2H + totals (eu region)
-├── 12d_validate_mlb_pinnacle.py   # Pinnacle validation analysis
+├── 14_update_daily_data.py        # DAILY: append yesterday's results to historical files
+├── run_daily.sh                   # Pipeline orchestrator (predict/evaluate/update/train)
 ├── scripts/
 │   ├── fetch_historical_games.py  # Fetch game results from MLB Stats API
 │   ├── fetch_bullpen_data.py      # Fetch per-reliever game logs (169K rows)
 │   ├── fetch_batter_data.py       # Fetch per-batter boxscore data (598K rows)
 │   ├── fetch_player_handedness.py # Fetch bat/pitch handedness (4K players)
-│   ├── fetch_historical_statcast.py # Fetch Statcast metrics per pitcher (incl. handedness splits, pitch mix)
+│   ├── fetch_historical_statcast.py # Fetch Statcast metrics per pitcher
 │   ├── fetch_batter_pitch_type_stats.py # Fetch batter pitch-type stats (2019-2025)
 │   ├── merge_pitcher_logs.py      # Merge MLB API + Statcast pitcher logs
 │   ├── integrate_historical_mlb_odds.py # Integrate Sports-Statistics odds
@@ -46,26 +48,29 @@ mlb-model/
 ├── models/
 │   ├── mlb_selected_features.json # Boruta-selected features
 │   ├── mlb_training_metrics.json  # Walk-forward RMSE, fold metrics
-│   ├── mlb_walkforward_report.txt # Walk-forward fold report
 │   ├── mlb_backtest_report.txt    # Backtest summary
-│   ├── mlb_pinnacle_validation_report.txt # Pinnacle validation
-│   └── trained/                   # .pkl model files (git-ignored)
-├── 00_build_historical.py         # Template (original bootstrap)
-├── 01_scrape_fangraphs.py         # Template for future daily pipeline
-│   ... (01b-12b template scripts)
-├── run_daily.sh                   # Pipeline orchestrator (template)
+│   └── trained/                   # .pkl model bundles (git-ignored)
+│       ├── lasso_margin_nomarket.pkl  # Production margin Lasso
+│       └── lasso_total_nomarket.pkl   # Production total Lasso
 └── requirements.txt
 ```
 
 ## Key Commands
 ```bash
+# Daily pipeline (run in order)
+./run_daily.sh update               # Morning: append yesterday's results
+./run_daily.sh predict              # Afternoon: full prediction pipeline
+./run_daily.sh evaluate             # Next morning: grade picks
+./run_daily.sh full                 # update + predict in one go
+
+# One-time setup (before first daily run)
+python3 06c_train_production_lasso.py  # Train & save production Lasso model
+
 # Full rebuild + train + backtest pipeline
 python3 00_build_mlb_historical.py    # Rebuild features (25K games)
-python3 06_train_mlb_model.py         # Walk-forward + Boruta (XGBoost)
-python3 06_train_mlb_model.py --no-market  # Baseball-only XGBoost
-python3 06c_ridge_lasso_experiment.py --no-market  # Ridge/Lasso (best model)
-python3 10_backtest_mlb.py            # Profitability backtest
-python3 10_backtest_mlb.py --no-market # Backtest no-market OOF predictions
+python3 06_train_mlb_model.py --no-market  # Baseball-only XGBoost (walk-forward)
+python3 06c_ridge_lasso_experiment.py --no-market  # Ridge/Lasso walk-forward
+python3 10_backtest_mlb.py --no-market # Backtest Lasso OOF predictions
 
 # Data fetching (run once, resumable)
 python3 scripts/fetch_historical_games.py     # ~4 hours
@@ -73,10 +78,6 @@ python3 scripts/fetch_bullpen_data.py         # ~36 minutes
 python3 scripts/fetch_batter_data.py          # ~35 minutes
 python3 scripts/fetch_player_handedness.py    # ~37 seconds
 python3 scripts/fetch_historical_statcast.py  # ~2 hours
-
-# Pinnacle validation
-python3 12c_fetch_mlb_pinnacle.py     # Fetch Pinnacle odds (~25K credits)
-python3 12d_validate_mlb_pinnacle.py  # Analyze edge vs Pinnacle
 ```
 
 ## Data Sources
@@ -217,3 +218,6 @@ The edge is consensus-vs-Pinnacle disagreement, not model alpha.
 | 2026-02-24 | Expanded to 91 candidate features (Statcast velo/command, opponent-adj, handedness, pitch-type, interactions) | More signal candidates |
 | 2026-02-24 | Ridge/Lasso breakthrough: +7.8% ROI at >=1.5 (Lasso, no-market, p=0.005) | Real baseball signal found |
 | 2026-02-24 | Residual target Ridge experiment — tried and discarded (calibration is better) | Dead end documented |
+| 2026-02-25 | Daily pipeline built: 05→07→08 (features→predict→edges) + 14 (data updater) + run_daily.sh | Production-ready |
+| 2026-02-25 | Production Lasso training script (06c_train_production_lasso.py) saves .pkl bundle | Deployable model |
+| 2026-02-25 | config.py: added ODDS_MARKETS alias (fixes 04_fetch_odds.py import) | Bug fix |

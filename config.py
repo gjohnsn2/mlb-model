@@ -63,6 +63,7 @@ ODDS_MARKETS_FULL = "h2h,spreads,totals"                         # Full-game: ML
 ODDS_MARKETS_F5 = "h2h_1st_5_innings,totals_1st_5_innings"       # First 5 innings: ML, O/U
 ODDS_MARKETS_NRFI = "totals_1st_1_innings"                       # 1st inning O/U (0.5 = NRFI)
 ODDS_MARKETS_ALL = f"{ODDS_MARKETS_FULL},{ODDS_MARKETS_F5},{ODDS_MARKETS_NRFI}"
+ODDS_MARKETS = ODDS_MARKETS_FULL  # Default markets for 04_fetch_odds.py
 
 # -- Model parameters ---------------------------------------------------
 # XGBoost defaults (tuned via Optuna in 06b_tune_hyperparams.py)
