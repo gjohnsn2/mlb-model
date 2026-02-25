@@ -113,11 +113,22 @@ class StartingPitcherComputer:
         df = pitcher_logs_df.copy()
         df["date"] = pd.to_datetime(df["date"])
 
-        # Parse numeric columns
+        # Parse numeric columns (counting stats from MLB API + Statcast metrics)
         numeric_cols = [
-            "era", "fip", "xfip", "whip", "k_pct", "bb_pct", "ip",
-            "pitches", "hits", "runs", "hr", "xwoba", "hard_hit_pct",
-            "groundball_pct", "flyball_pct", "barrel_pct",
+            "ip", "pitches", "hits", "runs", "earned_runs", "home_runs",
+            "strikeouts", "walks", "batters_faced",
+            # Statcast per-game metrics
+            "xwoba", "hard_hit_pct", "groundball_pct", "flyball_pct",
+            "barrel_pct", "whiff_rate",
+            # Handedness splits (from Statcast)
+            "xwoba_vs_LHB", "xwoba_vs_RHB",
+            "whiff_rate_vs_LHB", "whiff_rate_vs_RHB",
+            # Pitch-type distribution (from Statcast)
+            "fastball_pct", "breaking_pct", "offspeed_pct",
+            "primary_pitch_pct", "pitch_mix_entropy",
+            # Velocity & command (from Statcast)
+            "avg_fastball_velo", "max_fastball_velo",
+            "zone_pct", "csw_pct", "chase_rate",
         ]
         for col in numeric_cols:
             if col in df.columns:
@@ -154,55 +165,170 @@ class StartingPitcherComputer:
 
         result = {}
 
-        # Season-to-date aggregates
+        # Number of starts this season
+        result["sp_starts"] = len(prior)
+
+        # ── Season-to-date rate stats (computed from counting stats) ──
+        has_ip = "ip" in prior.columns
+        total_ip = prior["ip"].sum() if has_ip else 0
+        has_bf = "batters_faced" in prior.columns
+        total_bf = prior["batters_faced"].sum() if has_bf else 0
+
+        if has_ip and total_ip > 0:
+            result["sp_season_ip"] = total_ip
+            result["sp_avg_ip"] = prior["ip"].mean()
+
+            # ERA = (earned_runs / IP) * 9
+            if "earned_runs" in prior.columns:
+                result["sp_era"] = (prior["earned_runs"].sum() / total_ip) * 9.0
+
+            # WHIP = (hits + walks) / IP
+            if "hits" in prior.columns and "walks" in prior.columns:
+                result["sp_whip"] = (prior["hits"].sum() + prior["walks"].sum()) / total_ip
+
+            # FIP = ((13*HR + 3*BB - 2*K) / IP) + 3.1
+            if all(c in prior.columns for c in ["home_runs", "walks", "strikeouts"]):
+                total_hr = prior["home_runs"].sum()
+                total_bb = prior["walks"].sum()
+                total_k = prior["strikeouts"].sum()
+                result["sp_fip"] = ((13 * total_hr + 3 * total_bb - 2 * total_k) / total_ip) + 3.1
+                # xFIP: use league-avg HR/FB rate (~10.5%) instead of actual HR
+                # Estimate fly balls from Statcast flyball_pct: FB = BIP * FB%
+                # BIP ≈ BF - K - BB (batted balls in play)
+                if "flyball_pct" in prior.columns:
+                    fb_pct_vals = prior["flyball_pct"].dropna()
+                    if len(fb_pct_vals) >= 2 and total_bf > 0:
+                        avg_fb_pct = fb_pct_vals.mean() / 100.0  # Convert from percentage
+                        bip = total_bf - total_k - total_bb
+                        if bip > 0:
+                            est_fb = bip * avg_fb_pct
+                            # League-avg HR/FB rate ≈ 10.5%
+                            expected_hr = est_fb * 0.105
+                            result["sp_xfip"] = ((13 * expected_hr + 3 * total_bb - 2 * total_k) / total_ip) + 3.1
+                        else:
+                            result["sp_xfip"] = result["sp_fip"]
+                    else:
+                        result["sp_xfip"] = result["sp_fip"]
+                else:
+                    result["sp_xfip"] = result["sp_fip"]
+
+            # Per-9 rates
+            if "home_runs" in prior.columns:
+                result["sp_hr_per_9"] = (prior["home_runs"].sum() / total_ip) * 9
+                result["sp_hr9"] = result["sp_hr_per_9"]
+            if "strikeouts" in prior.columns:
+                result["sp_k_per_9"] = (prior["strikeouts"].sum() / total_ip) * 9
+            if "walks" in prior.columns:
+                result["sp_bb_per_9"] = (prior["walks"].sum() / total_ip) * 9
+
+        # Percentage rates (using batters faced)
+        if has_bf and total_bf > 0:
+            if "strikeouts" in prior.columns:
+                result["sp_k_pct"] = prior["strikeouts"].sum() / total_bf
+            if "walks" in prior.columns:
+                result["sp_bb_pct"] = prior["walks"].sum() / total_bf
+
+        # K-BB%
+        if "sp_k_pct" in result and "sp_bb_pct" in result:
+            result["sp_k_bb"] = result["sp_k_pct"] - result["sp_bb_pct"]
+
+        # Average pitches per start
+        if "pitches" in prior.columns:
+            p_vals = prior["pitches"].dropna()
+            if len(p_vals) > 0:
+                result["sp_avg_pitches"] = p_vals.mean()
+
+        # ── Statcast per-game averages (already rate stats in the data) ──
         for col, key in [
-            ("era", "sp_era"), ("fip", "sp_fip"), ("xfip", "sp_xfip"),
-            ("whip", "sp_whip"), ("k_pct", "sp_k_pct"), ("bb_pct", "sp_bb_pct"),
             ("xwoba", "sp_xwoba"), ("hard_hit_pct", "sp_hard_hit_pct"),
             ("groundball_pct", "sp_groundball_pct"),
             ("flyball_pct", "sp_flyball_pct"),
             ("barrel_pct", "sp_barrel_pct"),
+            ("whiff_rate", "sp_whiff_rate"),
         ]:
             if col in prior.columns:
                 vals = prior[col].dropna()
                 if len(vals) >= 2:
                     result[key] = vals.mean()
 
-        # K-BB%
-        if "sp_k_pct" in result and "sp_bb_pct" in result:
-            result["sp_k_bb"] = result["sp_k_pct"] - result["sp_bb_pct"]
+        # Handedness splits (from Statcast)
+        for col, key in [
+            ("xwoba_vs_LHB", "sp_xwoba_vs_LHB"),
+            ("xwoba_vs_RHB", "sp_xwoba_vs_RHB"),
+            ("whiff_rate_vs_LHB", "sp_whiff_rate_vs_LHB"),
+            ("whiff_rate_vs_RHB", "sp_whiff_rate_vs_RHB"),
+        ]:
+            if col in prior.columns:
+                vals = prior[col].dropna()
+                if len(vals) >= 2:
+                    result[key] = vals.mean()
 
-        # HR/9 (computed from starts)
-        if "hr" in prior.columns and "ip" in prior.columns:
-            total_hr = prior["hr"].sum()
-            total_ip = prior["ip"].sum()
-            if total_ip > 0:
-                result["sp_hr9"] = (total_hr / total_ip) * 9
+        # Pitch-type distribution (from Statcast)
+        for col, key in [
+            ("fastball_pct", "sp_fastball_pct"),
+            ("breaking_pct", "sp_breaking_pct"),
+            ("offspeed_pct", "sp_offspeed_pct"),
+            ("primary_pitch_pct", "sp_primary_pitch_pct"),
+            ("pitch_mix_entropy", "sp_pitch_mix_entropy"),
+        ]:
+            if col in prior.columns:
+                vals = prior[col].dropna()
+                if len(vals) >= 2:
+                    result[key] = vals.mean()
 
-        # Season IP total
-        if "ip" in prior.columns:
-            result["sp_season_ip"] = prior["ip"].sum()
+        # Velocity & command (from Statcast)
+        for col, key in [
+            ("avg_fastball_velo", "sp_fastball_velo"),
+            ("max_fastball_velo", "sp_max_velo"),
+            ("zone_pct", "sp_zone_pct"),
+            ("csw_pct", "sp_csw_pct"),
+            ("chase_rate", "sp_chase_rate"),
+        ]:
+            if col in prior.columns:
+                vals = prior[col].dropna()
+                if len(vals) >= 2:
+                    result[key] = vals.mean()
 
         # Days rest
         if len(prior) > 0:
             last_start = prior["date"].max()
             result["sp_days_rest"] = (game_date - last_start).days
 
-        # Last 3 starts recency stats
+        # ── Last 3 starts recency stats ──
         last3 = prior.tail(3)
         if len(last3) >= 2:
-            if "era" in last3.columns:
-                result["sp_era_last3"] = last3["era"].dropna().mean()
-            if "fip" in last3.columns:
-                result["sp_fip_last3"] = last3["fip"].dropna().mean()
-            if "ip" in last3.columns:
+            l3_ip = last3["ip"].sum() if has_ip else 0
+            l3_bf = last3["batters_faced"].sum() if has_bf else 0
+
+            # Rate stats from last 3 counting stats
+            if l3_ip > 0:
+                if "earned_runs" in last3.columns:
+                    result["sp_era_last3"] = (last3["earned_runs"].sum() / l3_ip) * 9.0
+                if "hits" in last3.columns and "walks" in last3.columns:
+                    result["sp_whip_last3"] = (last3["hits"].sum() + last3["walks"].sum()) / l3_ip
+                if all(c in last3.columns for c in ["home_runs", "walks", "strikeouts"]):
+                    result["sp_fip_last3"] = ((13 * last3["home_runs"].sum() + 3 * last3["walks"].sum() - 2 * last3["strikeouts"].sum()) / l3_ip) + 3.1
+            if l3_bf > 0 and "strikeouts" in last3.columns:
+                result["sp_k_pct_last3"] = last3["strikeouts"].sum() / l3_bf
+
+            # Statcast averages over last 3
+            for col, key in [
+                ("xwoba", "sp_xwoba_last3"), ("hard_hit_pct", "sp_hard_hit_pct_last3"),
+                ("barrel_pct", "sp_barrel_pct_last3"),
+                ("groundball_pct", "sp_groundball_pct_last3"),
+                ("flyball_pct", "sp_flyball_pct_last3"),
+                ("whiff_rate", "sp_whiff_rate_last3"),
+            ]:
+                if col in last3.columns:
+                    vals = last3[col].dropna()
+                    if len(vals) >= 1:
+                        result[key] = vals.mean()
+
+            if has_ip:
                 result["sp_ip_last3_avg"] = last3["ip"].dropna().mean()
-            if "k_pct" in last3.columns:
-                result["sp_k_pct_last3"] = last3["k_pct"].dropna().mean()
             if "pitches" in last3.columns:
                 pitches = last3["pitches"].dropna()
                 if len(pitches) >= 2:
-                    # Trend: positive = pitch count increasing
                     x = np.arange(len(pitches))
                     if np.std(pitches) > 0:
                         result["sp_pitch_count_trend"] = float(np.polyfit(x, pitches.values, 1)[0])

@@ -39,7 +39,7 @@
         ],
         "rmse": 4.55143194927446,
         "mae": 3.585778017975416,
-        "time_seconds": 14.198646068572998
+        "time_seconds": 13.931921005249023
       },
       {
         "fold": 2,
@@ -60,7 +60,7 @@
         "tentative": [],
         "rmse": 4.394721352731547,
         "mae": 3.406705667373748,
-        "time_seconds": 9.254917860031128
+        "time_seconds": 8.979480266571045
       },
       {
         "fold": 3,
@@ -81,7 +81,7 @@
         "tentative": [],
         "rmse": 4.531832009130302,
         "mae": 3.517596073654609,
-        "time_seconds": 14.901710033416748
+        "time_seconds": 14.525626182556152
       },
       {
         "fold": 4,
@@ -102,7 +102,7 @@
         "tentative": [],
         "rmse": 4.552139246129338,
         "mae": 3.4965177325837384,
-        "time_seconds": 7.451056957244873
+        "time_seconds": 7.173648834228516
       },
       {
         "fold": 5,
@@ -123,7 +123,7 @@
         "tentative": [],
         "rmse": 4.614629941443391,
         "mae": 3.6035024573269836,
-        "time_seconds": 16.08751606941223
+        "time_seconds": 15.485997915267944
       },
       {
         "fold": 6,
@@ -144,7 +144,7 @@
         "tentative": [],
         "rmse": 4.422179314189976,
         "mae": 3.3380837845875164,
-        "time_seconds": 12.809135913848877
+        "time_seconds": 12.3327317237854
       },
       {
         "fold": 7,
@@ -168,7 +168,7 @@
         ],
         "rmse": 4.499913311341544,
         "mae": 3.470222208701599,
-        "time_seconds": 16.32496213912964
+        "time_seconds": 15.772594928741455
       },
       {
         "fold": 8,
@@ -191,7 +191,7 @@
         "tentative": [],
         "rmse": 4.372517986599141,
         "mae": 3.4391055913692554,
-        "time_seconds": 17.204964876174927
+        "time_seconds": 16.80203604698181
       },
       {
         "fold": 9,
@@ -217,7 +217,7 @@
         ],
         "rmse": 4.517957052014875,
         "mae": 3.467868547998935,
-        "time_seconds": 20.51120090484619
+        "time_seconds": 20.064214944839478
       }
     ],
     "feature_stability": {
@@ -283,7 +283,7 @@
         "tentative": [],
         "rmse": 4.462285270309693,
         "mae": 3.5196024911343713,
-        "time_seconds": 5.081310033798218
+        "time_seconds": 4.8882670402526855
       },
       {
         "fold": 2,
@@ -302,7 +302,7 @@
         "tentative": [],
         "rmse": 4.513254928627062,
         "mae": 3.5821748060794536,
-        "time_seconds": 8.774121046066284
+        "time_seconds": 8.437041997909546
       },
       {
         "fold": 3,
@@ -324,7 +324,7 @@
         ],
         "rmse": 4.655161840907646,
         "mae": 3.6595597127588784,
-        "time_seconds": 13.422502994537354
+        "time_seconds": 12.929872274398804
       },
       {
         "fold": 4,
@@ -348,7 +348,7 @@
         ],
         "rmse": 4.4302110634312974,
         "mae": 3.4303529671260287,
-        "time_seconds": 15.067460775375366
+        "time_seconds": 14.331181049346924
       },
       {
         "fold": 5,
@@ -367,7 +367,7 @@
         "tentative": [],
         "rmse": 4.275342815300796,
         "mae": 3.2986064692372157,
-        "time_seconds": 13.923009157180786
+        "time_seconds": 13.406320810317993
       },
       {
         "fold": 6,
@@ -389,7 +389,7 @@
         ],
         "rmse": 4.177503056575594,
         "mae": 3.189518652493924,
-        "time_seconds": 14.052098989486694
+        "time_seconds": 13.514823198318481
       },
       {
         "fold": 7,
@@ -410,7 +410,7 @@
         "tentative": [],
         "rmse": 4.344282143838415,
         "mae": 3.400207787149841,
-        "time_seconds": 8.408445119857788
+        "time_seconds": 7.987388849258423
       },
       {
         "fold": 8,
@@ -436,7 +436,7 @@
         ],
         "rmse": 4.090301863957056,
         "mae": 3.2041492150506237,
-        "time_seconds": 17.122578144073486
+        "time_seconds": 16.522982120513916
       },
       {
         "fold": 9,
@@ -459,7 +459,7 @@
         "tentative": [],
         "rmse": 4.364495300817041,
         "mae": 3.379085729022018,
-        "time_seconds": 17.42717409133911
+        "time_seconds": 16.788996696472168
       }
     ],
     "feature_stability": {
@@ -486,6 +486,670 @@
       "lineup_obp_diff": {
         "count": 1,
         "pct": 0.1111111111111111
+      }
+    }
+  },
+  "f5_margin": {
+    "walkforward_overall_rmse": 3.4055824916366295,
+    "walkforward_overall_mae": 2.586056101660094,
+    "walkforward_calibrated_rmse": 3.3741901768403197,
+    "walkforward_n_oof": 20688,
+    "n_samples": 25611,
+    "n_features": 4,
+    "features": [
+      "consensus_total",
+      "market_implied_prob",
+      "market_logit",
+      "sp_k_pct_diff"
+    ],
+    "has_calibrator": true
+  },
+  "f5_margin_walkforward": {
+    "fold_results": [
+      {
+        "fold": 1,
+        "test_season": 2017,
+        "n_train": 4923,
+        "n_test": 2466,
+        "n_features": 2,
+        "features": [
+          "market_implied_prob",
+          "market_logit"
+        ],
+        "confirmed": [
+          "market_implied_prob",
+          "market_logit"
+        ],
+        "tentative": [],
+        "rmse": 3.4706240020444348,
+        "mae": 2.6716672918213185,
+        "time_seconds": 8.979937076568604
+      },
+      {
+        "fold": 2,
+        "test_season": 2018,
+        "n_train": 7389,
+        "n_test": 2461,
+        "n_features": 2,
+        "features": [
+          "market_implied_prob",
+          "market_logit"
+        ],
+        "confirmed": [
+          "market_implied_prob",
+          "market_logit"
+        ],
+        "tentative": [],
+        "rmse": 3.3106246396738017,
+        "mae": 2.5072162383722656,
+        "time_seconds": 12.80197787284851
+      },
+      {
+        "fold": 3,
+        "test_season": 2019,
+        "n_train": 9850,
+        "n_test": 2460,
+        "n_features": 3,
+        "features": [
+          "market_implied_prob",
+          "market_logit",
+          "num_books"
+        ],
+        "confirmed": [
+          "market_implied_prob",
+          "market_logit",
+          "num_books"
+        ],
+        "tentative": [],
+        "rmse": 3.5047235250382482,
+        "mae": 2.6446467217148806,
+        "time_seconds": 14.7410569190979
+      },
+      {
+        "fold": 4,
+        "test_season": 2020,
+        "n_train": 12310,
+        "n_test": 951,
+        "n_features": 3,
+        "features": [
+          "market_implied_prob",
+          "market_logit",
+          "sp_k_pct_diff"
+        ],
+        "confirmed": [
+          "market_implied_prob",
+          "market_logit"
+        ],
+        "tentative": [
+          "sp_k_pct_diff"
+        ],
+        "rmse": 3.55872895285411,
+        "mae": 2.6771330833368956,
+        "time_seconds": 14.28414797782898
+      },
+      {
+        "fold": 5,
+        "test_season": 2021,
+        "n_train": 13261,
+        "n_test": 2467,
+        "n_features": 3,
+        "features": [
+          "market_implied_prob",
+          "market_logit",
+          "num_books"
+        ],
+        "confirmed": [
+          "market_implied_prob",
+          "market_logit",
+          "num_books"
+        ],
+        "tentative": [],
+        "rmse": 3.541631205869649,
+        "mae": 2.7246552690415125,
+        "time_seconds": 11.20059609413147
+      },
+      {
+        "fold": 6,
+        "test_season": 2022,
+        "n_train": 15728,
+        "n_test": 2462,
+        "n_features": 3,
+        "features": [
+          "consensus_total",
+          "market_implied_prob",
+          "market_logit"
+        ],
+        "confirmed": [
+          "consensus_total",
+          "market_implied_prob",
+          "market_logit"
+        ],
+        "tentative": [],
+        "rmse": 3.3686125539202885,
+        "mae": 2.5192411347694947,
+        "time_seconds": 15.252308130264282
+      },
+      {
+        "fold": 7,
+        "test_season": 2023,
+        "n_train": 18190,
+        "n_test": 2474,
+        "n_features": 5,
+        "features": [
+          "consensus_total",
+          "market_implied_prob",
+          "market_logit",
+          "sp_k_pct_diff",
+          "sp_starts_diff"
+        ],
+        "confirmed": [
+          "consensus_total",
+          "market_implied_prob",
+          "market_logit",
+          "sp_k_pct_diff"
+        ],
+        "tentative": [
+          "sp_starts_diff"
+        ],
+        "rmse": 3.4091138271602537,
+        "mae": 2.5722128893688234,
+        "time_seconds": 16.66818118095398
+      },
+      {
+        "fold": 8,
+        "test_season": 2024,
+        "n_train": 20664,
+        "n_test": 2471,
+        "n_features": 5,
+        "features": [
+          "consensus_total",
+          "market_implied_prob",
+          "market_logit",
+          "sp_k_pct_diff",
+          "sp_season_ip_diff"
+        ],
+        "confirmed": [
+          "consensus_total",
+          "market_implied_prob",
+          "market_logit",
+          "sp_k_pct_diff",
+          "sp_season_ip_diff"
+        ],
+        "tentative": [],
+        "rmse": 3.293182562267918,
+        "mae": 2.5194628281978257,
+        "time_seconds": 16.595675230026245
+      },
+      {
+        "fold": 9,
+        "test_season": 2025,
+        "n_train": 23135,
+        "n_test": 2476,
+        "n_features": 5,
+        "features": [
+          "consensus_total",
+          "market_implied_prob",
+          "market_logit",
+          "sp_k_pct_diff",
+          "sp_season_ip_diff"
+        ],
+        "confirmed": [
+          "consensus_total",
+          "market_implied_prob",
+          "market_logit",
+          "sp_k_pct_diff",
+          "sp_season_ip_diff"
+        ],
+        "tentative": [],
+        "rmse": 3.275791364382412,
+        "mae": 2.4945920314633696,
+        "time_seconds": 12.490283012390137
+      }
+    ],
+    "feature_stability": {
+      "market_implied_prob": {
+        "count": 9,
+        "pct": 1.0
+      },
+      "market_logit": {
+        "count": 9,
+        "pct": 1.0
+      },
+      "sp_k_pct_diff": {
+        "count": 4,
+        "pct": 0.4444444444444444
+      },
+      "consensus_total": {
+        "count": 4,
+        "pct": 0.4444444444444444
+      },
+      "num_books": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "sp_season_ip_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "sp_starts_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      }
+    }
+  },
+  "f5_total": {
+    "walkforward_overall_rmse": 3.2813398051219838,
+    "walkforward_overall_mae": 2.5798736898644847,
+    "walkforward_calibrated_rmse": 3.2752910330525142,
+    "walkforward_n_oof": 20688,
+    "n_samples": 25611,
+    "n_features": 2,
+    "features": [
+      "consensus_total",
+      "temp"
+    ],
+    "has_calibrator": true
+  },
+  "f5_total_walkforward": {
+    "fold_results": [
+      {
+        "fold": 1,
+        "test_season": 2017,
+        "n_train": 4923,
+        "n_test": 2466,
+        "n_features": 1,
+        "features": [
+          "consensus_total"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [],
+        "rmse": 3.4063211848226653,
+        "mae": 2.7419067011165694,
+        "time_seconds": 5.761670112609863
+      },
+      {
+        "fold": 2,
+        "test_season": 2018,
+        "n_train": 7389,
+        "n_test": 2461,
+        "n_features": 1,
+        "features": [
+          "consensus_total"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [],
+        "rmse": 3.3357460407359314,
+        "mae": 2.6509176024282333,
+        "time_seconds": 5.832036733627319
+      },
+      {
+        "fold": 3,
+        "test_season": 2019,
+        "n_train": 9850,
+        "n_test": 2460,
+        "n_features": 1,
+        "features": [
+          "consensus_total"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [],
+        "rmse": 3.455092516855221,
+        "mae": 2.734035600007065,
+        "time_seconds": 12.880163192749023
+      },
+      {
+        "fold": 4,
+        "test_season": 2020,
+        "n_train": 12310,
+        "n_test": 951,
+        "n_features": 2,
+        "features": [
+          "consensus_total",
+          "temp"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [
+          "temp"
+        ],
+        "rmse": 3.440311948412209,
+        "mae": 2.6299958244107122,
+        "time_seconds": 13.447373867034912
+      },
+      {
+        "fold": 5,
+        "test_season": 2021,
+        "n_train": 13261,
+        "n_test": 2467,
+        "n_features": 2,
+        "features": [
+          "consensus_total",
+          "temp"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [
+          "temp"
+        ],
+        "rmse": 3.1939411587770845,
+        "mae": 2.471924943966473,
+        "time_seconds": 13.285369157791138
+      },
+      {
+        "fold": 6,
+        "test_season": 2022,
+        "n_train": 15728,
+        "n_test": 2462,
+        "n_features": 2,
+        "features": [
+          "consensus_total",
+          "temp"
+        ],
+        "confirmed": [
+          "consensus_total",
+          "temp"
+        ],
+        "tentative": [],
+        "rmse": 3.155545210537466,
+        "mae": 2.4623262679596243,
+        "time_seconds": 10.302083015441895
+      },
+      {
+        "fold": 7,
+        "test_season": 2023,
+        "n_train": 18190,
+        "n_test": 2474,
+        "n_features": 1,
+        "features": [
+          "consensus_total"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [],
+        "rmse": 3.299175052247519,
+        "mae": 2.59911242650224,
+        "time_seconds": 6.484817028045654
+      },
+      {
+        "fold": 8,
+        "test_season": 2024,
+        "n_train": 20664,
+        "n_test": 2471,
+        "n_features": 3,
+        "features": [
+          "consensus_f5_total",
+          "consensus_total",
+          "temp"
+        ],
+        "confirmed": [
+          "consensus_f5_total",
+          "consensus_total",
+          "temp"
+        ],
+        "tentative": [],
+        "rmse": 3.1099994963432667,
+        "mae": 2.470081287036295,
+        "time_seconds": 13.753143072128296
+      },
+      {
+        "fold": 9,
+        "test_season": 2025,
+        "n_train": 23135,
+        "n_test": 2476,
+        "n_features": 5,
+        "features": [
+          "consensus_f5_total",
+          "consensus_total",
+          "num_books",
+          "team_rest_days_diff",
+          "temp"
+        ],
+        "confirmed": [
+          "consensus_f5_total",
+          "consensus_total",
+          "num_books",
+          "team_rest_days_diff",
+          "temp"
+        ],
+        "tentative": [],
+        "rmse": 3.2168631527521585,
+        "mae": 2.4902512255412117,
+        "time_seconds": 11.358978748321533
+      }
+    ],
+    "feature_stability": {
+      "consensus_total": {
+        "count": 9,
+        "pct": 1.0
+      },
+      "temp": {
+        "count": 5,
+        "pct": 0.5555555555555556
+      },
+      "consensus_f5_total": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "num_books": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "team_rest_days_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      }
+    }
+  },
+  "nrfi": {
+    "walkforward_overall_brier": 0.24703167651185823,
+    "walkforward_overall_logloss": 0.6872251964796436,
+    "walkforward_overall_auc": 0.5567328339104018,
+    "walkforward_base_rate": 0.49724477958236657,
+    "walkforward_naive_brier": 0.24999240876045026,
+    "walkforward_n_oof": 20688,
+    "n_samples": 25611,
+    "n_features": 1,
+    "features": [
+      "consensus_total"
+    ]
+  },
+  "nrfi_walkforward": {
+    "fold_results": [
+      {
+        "fold": 1,
+        "test_season": 2017,
+        "n_train": 4923,
+        "n_test": 2466,
+        "n_features": 1,
+        "features": [
+          "consensus_total"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [],
+        "brier": 0.24959403276443481,
+        "logloss": 0.6923749169102773,
+        "auc": 0.5153035391167095,
+        "time_seconds": 7.202112674713135
+      },
+      {
+        "fold": 2,
+        "test_season": 2018,
+        "n_train": 7389,
+        "n_test": 2461,
+        "n_features": 1,
+        "features": [
+          "consensus_total"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [],
+        "brier": 0.24966071546077728,
+        "logloss": 0.692471154656778,
+        "auc": 0.5304578820626423,
+        "time_seconds": 11.368274927139282
+      },
+      {
+        "fold": 3,
+        "test_season": 2019,
+        "n_train": 9850,
+        "n_test": 2460,
+        "n_features": 1,
+        "features": [
+          "consensus_total"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [],
+        "brier": 0.24860629439353943,
+        "logloss": 0.6903252933390196,
+        "auc": 0.5236921132601173,
+        "time_seconds": 8.940160036087036
+      },
+      {
+        "fold": 4,
+        "test_season": 2020,
+        "n_train": 12310,
+        "n_test": 951,
+        "n_features": 1,
+        "features": [
+          "consensus_total"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [],
+        "brier": 0.2474365234375,
+        "logloss": 0.6879937113960237,
+        "auc": 0.553779776910897,
+        "time_seconds": 8.096930027008057
+      },
+      {
+        "fold": 5,
+        "test_season": 2021,
+        "n_train": 13261,
+        "n_test": 2467,
+        "n_features": 1,
+        "features": [
+          "consensus_total"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [],
+        "brier": 0.2461758404970169,
+        "logloss": 0.685177622287213,
+        "auc": 0.5483269640573009,
+        "time_seconds": 7.124298810958862
+      },
+      {
+        "fold": 6,
+        "test_season": 2022,
+        "n_train": 15728,
+        "n_test": 2462,
+        "n_features": 1,
+        "features": [
+          "consensus_total"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [],
+        "brier": 0.24670791625976562,
+        "logloss": 0.6866739034769143,
+        "auc": 0.5559195635868613,
+        "time_seconds": 7.922185897827148
+      },
+      {
+        "fold": 7,
+        "test_season": 2023,
+        "n_train": 18190,
+        "n_test": 2474,
+        "n_features": 2,
+        "features": [
+          "consensus_total",
+          "num_books"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [
+          "num_books"
+        ],
+        "brier": 0.24591906368732452,
+        "logloss": 0.6847347176283392,
+        "auc": 0.5542286001480979,
+        "time_seconds": 12.68313479423523
+      },
+      {
+        "fold": 8,
+        "test_season": 2024,
+        "n_train": 20664,
+        "n_test": 2471,
+        "n_features": 3,
+        "features": [
+          "consensus_f1_total",
+          "consensus_total",
+          "num_books"
+        ],
+        "confirmed": [
+          "consensus_f1_total",
+          "consensus_total",
+          "num_books"
+        ],
+        "tentative": [],
+        "brier": 0.24054493010044098,
+        "logloss": 0.6738382584549183,
+        "auc": 0.6053425052193715,
+        "time_seconds": 8.189568042755127
+      },
+      {
+        "fold": 9,
+        "test_season": 2025,
+        "n_train": 23135,
+        "n_test": 2476,
+        "n_features": 3,
+        "features": [
+          "consensus_f1_total",
+          "consensus_total",
+          "num_books"
+        ],
+        "confirmed": [
+          "consensus_f1_total",
+          "consensus_total",
+          "num_books"
+        ],
+        "tentative": [],
+        "brier": 0.24890661239624023,
+        "logloss": 0.6919435627917808,
+        "auc": 0.581774334989769,
+        "time_seconds": 7.465391159057617
+      }
+    ],
+    "feature_stability": {
+      "consensus_total": {
+        "count": 9,
+        "pct": 1.0
+      },
+      "num_books": {
+        "count": 3,
+        "pct": 0.3333333333333333
+      },
+      "consensus_f1_total": {
+        "count": 2,
+        "pct": 0.2222222222222222
       }
     }
   }

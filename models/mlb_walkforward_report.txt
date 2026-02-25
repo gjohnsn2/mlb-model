@@ -1,15 +1,15 @@
 MLB WALK-FORWARD VALIDATION REPORT
 ============================================================
-Generated: 2026-02-23 23:28
+Generated: 2026-02-24 09:38
 
 
 ============================================================
-MARGIN MODEL
+MARGIN (full-game) MODEL
 ============================================================
 Overall RMSE: 4.49
 Overall MAE:  3.48
 OOF samples:  20,688
-Total time:   129s
+Total time:   125s
 
 Per-Fold Results:
 Fold    Test    Train    Test  Feats    RMSE     MAE
@@ -37,12 +37,12 @@ Feature                             Count    Pct
   team_run_diff_10_diff                 1    11%  #........
 
 ============================================================
-TOTAL MODEL
+TOTAL (full-game) MODEL
 ============================================================
 Overall RMSE: 4.37
 Overall MAE:  3.41
 OOF samples:  20,319
-Total time:   113s
+Total time:   109s
 
 Per-Fold Results:
 Fold    Test    Train    Test  Feats    RMSE     MAE
@@ -67,3 +67,100 @@ Feature                             Count    Pct
   lineup_k_rate_diff                    3    33%  ###......
   team_rest_days_diff                   3    33%  ###......
   lineup_obp_diff                       1    11%  #........
+
+============================================================
+F5 MARGIN (first 5 innings) MODEL
+============================================================
+Overall RMSE: 3.41
+Overall MAE:  2.59
+OOF samples:  20,688
+Total time:   123s
+
+Per-Fold Results:
+Fold    Test    Train    Test  Feats    RMSE     MAE
+----------------------------------------------------
+   1    2017    4,923   2,466      2    3.47    2.67
+   2    2018    7,389   2,461      2    3.31    2.51
+   3    2019    9,850   2,460      3    3.50    2.64
+   4    2020   12,310     951      3    3.56    2.68
+   5    2021   13,261   2,467      3    3.54    2.72
+   6    2022   15,728   2,462      3    3.37    2.52
+   7    2023   18,190   2,474      5    3.41    2.57
+   8    2024   20,664   2,471      5    3.29    2.52
+   9    2025   23,135   2,476      5    3.28    2.49
+         Mean                            3.41    2.59
+
+Feature Stability (selected in N of 9 folds):
+Feature                             Count    Pct
+------------------------------------------------
+  market_implied_prob                   9   100%  #########
+  market_logit                          9   100%  #########
+  consensus_total                       4    44%  ####.....
+  sp_k_pct_diff                         4    44%  ####.....
+  num_books                             2    22%  ##.......
+  sp_season_ip_diff                     2    22%  ##.......
+  sp_starts_diff                        1    11%  #........
+
+============================================================
+F5 TOTAL (first 5 innings) MODEL
+============================================================
+Overall RMSE: 3.28
+Overall MAE:  2.58
+OOF samples:  20,688
+Total time:   93s
+
+Per-Fold Results:
+Fold    Test    Train    Test  Feats    RMSE     MAE
+----------------------------------------------------
+   1    2017    4,923   2,466      1    3.41    2.74
+   2    2018    7,389   2,461      1    3.34    2.65
+   3    2019    9,850   2,460      1    3.46    2.73
+   4    2020   12,310     951      2    3.44    2.63
+   5    2021   13,261   2,467      2    3.19    2.47
+   6    2022   15,728   2,462      2    3.16    2.46
+   7    2023   18,190   2,474      1    3.30    2.60
+   8    2024   20,664   2,471      3    3.11    2.47
+   9    2025   23,135   2,476      5    3.22    2.49
+         Mean                            3.29    2.58
+
+Feature Stability (selected in N of 9 folds):
+Feature                             Count    Pct
+------------------------------------------------
+  consensus_total                       9   100%  #########
+  temp                                  5    56%  #####....
+  consensus_f5_total                    2    22%  ##.......
+  num_books                             1    11%  #........
+  team_rest_days_diff                   1    11%  #........
+
+============================================================
+NRFI MODEL (classifier)
+============================================================
+Overall Brier:   0.2470
+Overall LogLoss: 0.6872
+Overall AUC:     0.557
+Base rate:       0.497
+Naive Brier:     0.2500
+Brier skill:     0.012
+OOF samples:     20,688
+Total time:      79s
+
+Per-Fold Results:
+Fold    Test    Train    Test  Feats    Brier   LogLoss    AUC
+------------------------------------------------------------
+   1    2017    4,923   2,466      1   0.2496    0.6924  0.515
+   2    2018    7,389   2,461      1   0.2497    0.6925  0.530
+   3    2019    9,850   2,460      1   0.2486    0.6903  0.524
+   4    2020   12,310     951      1   0.2474    0.6880  0.554
+   5    2021   13,261   2,467      1   0.2462    0.6852  0.548
+   6    2022   15,728   2,462      1   0.2467    0.6867  0.556
+   7    2023   18,190   2,474      2   0.2459    0.6847  0.554
+   8    2024   20,664   2,471      3   0.2405    0.6738  0.605
+   9    2025   23,135   2,476      3   0.2489    0.6919  0.582
+         Mean                           0.2471    0.6873  0.552
+
+Feature Stability (selected in N of 9 folds):
+Feature                             Count    Pct
+------------------------------------------------
+  consensus_total                       9   100%  #########
+  num_books                             3    33%  ###......
+  consensus_f1_total                    2    22%  ##.......

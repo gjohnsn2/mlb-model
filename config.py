@@ -313,7 +313,7 @@ MLB_ML_UNIT_TIERS = [
     (0.05, 1.0, "1u"),   # prob edge >= 5%: production threshold
 ]
 
-# 69 candidate features for MLB models
+# 98 candidate features for MLB models (69 original + 12 advanced + 14 Round 2 + 3 ensemble)
 MLB_CANDIDATE_FEATURES = [
     # SP season stats (14 diff features)
     "sp_era_diff", "sp_whip_diff", "sp_fip_diff", "sp_xfip_diff",
@@ -321,6 +321,11 @@ MLB_CANDIDATE_FEATURES = [
     "sp_xwoba_diff", "sp_hard_hit_pct_diff", "sp_barrel_pct_diff",
     "sp_groundball_pct_diff", "sp_flyball_pct_diff", "sp_whiff_rate_diff",
     "sp_starts_diff",
+    # SP K-BB% (unlock — was computed but not in candidate list)
+    "sp_k_bb_diff",
+    # SP velocity & command from Statcast (5 diff features)
+    "sp_fastball_velo_diff", "sp_max_velo_diff", "sp_zone_pct_diff",
+    "sp_csw_pct_diff", "sp_chase_rate_diff",
     # SP recency (last 3 starts, 14 diff features)
     "sp_era_last3_diff", "sp_whip_last3_diff", "sp_fip_last3_diff",
     "sp_k_pct_last3_diff", "sp_xwoba_last3_diff",
@@ -350,11 +355,39 @@ MLB_CANDIDATE_FEATURES = [
     "total_distance_7d_diff", "tz_changes_7d_diff", "games_in_7d_diff",
     # Schedule context (3 features)
     "is_interleague", "series_game_num", "post_allstar_diff",
-    # Lineup composition (8 diff features, requires batter data)
+    # Lineup composition (8 + 3 diff features, requires batter data)
     "lineup_ops_diff", "lineup_power_diff", "lineup_k_rate_diff",
     "lineup_obp_diff", "platoon_advantage_pct_diff",
     "star_missing_ops_diff", "lineup_continuity_diff",
     "lineup_hot_streak_diff",
+    # Lineup improvements (3 new diff features)
+    "lineup_ops_weighted_diff", "lineup_top_heavy_diff", "lineup_bb_k_ratio_diff",
+    # Tier 1: Opponent-adjusted (4 diff features)
+    "sp_adj_era_diff", "sp_adj_fip_diff",
+    "batting_adj_ops_diff", "batting_adj_k_rate_diff",
+    # Tier 2: Handedness splits (4 diff features)
+    "lineup_ops_vs_hand_diff", "lineup_k_rate_vs_hand_diff",
+    "sp_whiff_rate_vs_hand_diff", "sp_xwoba_vs_hand_diff",
+    # Tier 3: Pitch-type matchups (5 diff features)
+    "lineup_woba_vs_sp_mix_diff", "lineup_xwoba_vs_sp_mix_diff",
+    "sp_primary_pitch_pct_diff", "sp_offspeed_pct_diff",
+    "sp_pitch_mix_entropy_diff",
+    # Interaction features (4 diff features)
+    "sp_k_x_lineup_k_diff", "sp_whiff_x_lineup_ops_diff",
+    "sp_fip_x_momentum_diff", "platoon_magnitude_diff",
+    # Ensemble stacking (Stage 1 no-market OOF predictions)
+    "nomarket_pred_margin", "nomarket_pred_f5_margin", "nomarket_pred_nrfi",
+]
+
+# F5 market features (sparse — ~19% of games, mostly 2023+)
+# XGBoost handles NaN natively, no imputation needed
+F5_EXTRA_CANDIDATE_FEATURES = [
+    "f5_market_implied_prob", "f5_market_logit", "consensus_f5_total",
+]
+
+# NRFI extra features (first-inning total line)
+NRFI_EXTRA_CANDIDATE_FEATURES = [
+    "consensus_f1_total",
 ]
 
 def _load_mlb_selected_features():
@@ -363,8 +396,20 @@ def _load_mlb_selected_features():
     if path.exists():
         with open(path) as f:
             data = json.load(f)
-        return data.get("margin_features", MLB_CANDIDATE_FEATURES), \
-               data.get("total_features", MLB_CANDIDATE_FEATURES)
-    return MLB_CANDIDATE_FEATURES, MLB_CANDIDATE_FEATURES
+        return (
+            data.get("margin_features", MLB_CANDIDATE_FEATURES),
+            data.get("total_features", MLB_CANDIDATE_FEATURES),
+            data.get("f5_margin_features", MLB_CANDIDATE_FEATURES + F5_EXTRA_CANDIDATE_FEATURES),
+            data.get("f5_total_features", MLB_CANDIDATE_FEATURES + F5_EXTRA_CANDIDATE_FEATURES),
+            data.get("nrfi_features", MLB_CANDIDATE_FEATURES + NRFI_EXTRA_CANDIDATE_FEATURES),
+        )
+    return (
+        MLB_CANDIDATE_FEATURES, MLB_CANDIDATE_FEATURES,
+        MLB_CANDIDATE_FEATURES + F5_EXTRA_CANDIDATE_FEATURES,
+        MLB_CANDIDATE_FEATURES + F5_EXTRA_CANDIDATE_FEATURES,
+        MLB_CANDIDATE_FEATURES + NRFI_EXTRA_CANDIDATE_FEATURES,
+    )
 
-MLB_MARGIN_FEATURES, MLB_TOTAL_FEATURES = _load_mlb_selected_features()
+(MLB_MARGIN_FEATURES, MLB_TOTAL_FEATURES,
+ MLB_F5_MARGIN_FEATURES, MLB_F5_TOTAL_FEATURES,
+ MLB_NRFI_FEATURES) = _load_mlb_selected_features()

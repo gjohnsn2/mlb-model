@@ -1,0 +1,1353 @@
+{
+  "margin": {
+    "walkforward_overall_rmse": 4.479471354195869,
+    "walkforward_overall_mae": 3.472984659006746,
+    "walkforward_calibrated_rmse": 4.413940641400565,
+    "walkforward_n_oof": 21108,
+    "n_samples": 26031,
+    "n_features": 5,
+    "features": [
+      "consensus_total",
+      "lineup_woba_vs_sp_mix_diff",
+      "market_implied_prob",
+      "market_logit",
+      "num_books"
+    ],
+    "has_calibrator": true,
+    "sample_weight_half_life": 3
+  },
+  "margin_walkforward": {
+    "fold_results": [
+      {
+        "fold": 1,
+        "test_season": 2017,
+        "n_train": 4923,
+        "n_test": 2466,
+        "n_features": 3,
+        "features": [
+          "is_interleague",
+          "market_implied_prob",
+          "market_logit"
+        ],
+        "confirmed": [
+          "is_interleague",
+          "market_implied_prob",
+          "market_logit"
+        ],
+        "tentative": [],
+        "rmse": 4.550645622206328,
+        "mae": 3.586124837512584,
+        "time_seconds": 15.904579162597656
+      },
+      {
+        "fold": 2,
+        "test_season": 2018,
+        "n_train": 7389,
+        "n_test": 2489,
+        "n_features": 3,
+        "features": [
+          "market_implied_prob",
+          "market_logit",
+          "num_books"
+        ],
+        "confirmed": [
+          "market_implied_prob",
+          "market_logit",
+          "num_books"
+        ],
+        "tentative": [],
+        "rmse": 4.373178247054869,
+        "mae": 3.383223305329869,
+        "time_seconds": 15.058978796005249
+      },
+      {
+        "fold": 3,
+        "test_season": 2019,
+        "n_train": 9878,
+        "n_test": 2516,
+        "n_features": 3,
+        "features": [
+          "market_implied_prob",
+          "market_logit",
+          "num_books"
+        ],
+        "confirmed": [
+          "market_implied_prob",
+          "market_logit",
+          "num_books"
+        ],
+        "tentative": [],
+        "rmse": 4.487548202931922,
+        "mae": 3.4720730371680704,
+        "time_seconds": 25.089787244796753
+      },
+      {
+        "fold": 4,
+        "test_season": 2020,
+        "n_train": 12394,
+        "n_test": 979,
+        "n_features": 3,
+        "features": [
+          "market_implied_prob",
+          "market_logit",
+          "num_books"
+        ],
+        "confirmed": [
+          "market_implied_prob",
+          "market_logit",
+          "num_books"
+        ],
+        "tentative": [],
+        "rmse": 4.566098326860503,
+        "mae": 3.4902965266873966,
+        "time_seconds": 16.02801513671875
+      },
+      {
+        "fold": 5,
+        "test_season": 2021,
+        "n_train": 13373,
+        "n_test": 2579,
+        "n_features": 4,
+        "features": [
+          "lineup_woba_vs_sp_mix_diff",
+          "market_implied_prob",
+          "market_logit",
+          "num_books"
+        ],
+        "confirmed": [
+          "market_implied_prob",
+          "market_logit"
+        ],
+        "tentative": [
+          "lineup_woba_vs_sp_mix_diff",
+          "num_books"
+        ],
+        "rmse": 4.68266881200354,
+        "mae": 3.6517738485221325,
+        "time_seconds": 26.65211296081543
+      },
+      {
+        "fold": 6,
+        "test_season": 2022,
+        "n_train": 15952,
+        "n_test": 2476,
+        "n_features": 5,
+        "features": [
+          "consensus_total",
+          "lineup_bb_k_ratio_diff",
+          "lineup_woba_vs_sp_mix_diff",
+          "market_implied_prob",
+          "market_logit"
+        ],
+        "confirmed": [
+          "consensus_total",
+          "lineup_woba_vs_sp_mix_diff",
+          "market_implied_prob",
+          "market_logit"
+        ],
+        "tentative": [
+          "lineup_bb_k_ratio_diff"
+        ],
+        "rmse": 4.424137036068096,
+        "mae": 3.3922224529225598,
+        "time_seconds": 30.900941133499146
+      },
+      {
+        "fold": 7,
+        "test_season": 2023,
+        "n_train": 18428,
+        "n_test": 2558,
+        "n_features": 6,
+        "features": [
+          "consensus_total",
+          "lineup_woba_vs_sp_mix_diff",
+          "market_implied_prob",
+          "market_logit",
+          "nomarket_pred_f5_margin",
+          "sp_k_bb_diff"
+        ],
+        "confirmed": [
+          "consensus_total",
+          "lineup_woba_vs_sp_mix_diff",
+          "market_implied_prob",
+          "market_logit",
+          "sp_k_bb_diff"
+        ],
+        "tentative": [
+          "nomarket_pred_f5_margin"
+        ],
+        "rmse": 4.43568504141431,
+        "mae": 3.42242542006132,
+        "time_seconds": 30.263421058654785
+      },
+      {
+        "fold": 8,
+        "test_season": 2024,
+        "n_train": 20986,
+        "n_test": 2513,
+        "n_features": 8,
+        "features": [
+          "consensus_total",
+          "lineup_bb_k_ratio_diff",
+          "lineup_woba_vs_sp_mix_diff",
+          "market_implied_prob",
+          "market_logit",
+          "nomarket_pred_f5_margin",
+          "sp_k_bb_diff",
+          "sp_xfip_diff"
+        ],
+        "confirmed": [
+          "consensus_total",
+          "lineup_woba_vs_sp_mix_diff",
+          "market_implied_prob",
+          "market_logit"
+        ],
+        "tentative": [
+          "lineup_bb_k_ratio_diff",
+          "nomarket_pred_f5_margin",
+          "sp_k_bb_diff",
+          "sp_xfip_diff"
+        ],
+        "rmse": 4.340919455958997,
+        "mae": 3.419111072761127,
+        "time_seconds": 50.14212107658386
+      },
+      {
+        "fold": 9,
+        "test_season": 2025,
+        "n_train": 23499,
+        "n_test": 2532,
+        "n_features": 8,
+        "features": [
+          "consensus_total",
+          "lineup_woba_vs_sp_mix_diff",
+          "lineup_xwoba_vs_sp_mix_diff",
+          "market_implied_prob",
+          "market_logit",
+          "nomarket_pred_f5_margin",
+          "num_books",
+          "sp_k_bb_diff"
+        ],
+        "confirmed": [
+          "consensus_total",
+          "lineup_xwoba_vs_sp_mix_diff",
+          "market_implied_prob",
+          "market_logit",
+          "nomarket_pred_f5_margin",
+          "sp_k_bb_diff"
+        ],
+        "tentative": [
+          "lineup_woba_vs_sp_mix_diff",
+          "num_books"
+        ],
+        "rmse": 4.492497686031521,
+        "mae": 3.446658596271755,
+        "time_seconds": 24.327964067459106
+      }
+    ],
+    "feature_stability": {
+      "market_implied_prob": {
+        "count": 9,
+        "pct": 1.0
+      },
+      "market_logit": {
+        "count": 9,
+        "pct": 1.0
+      },
+      "num_books": {
+        "count": 5,
+        "pct": 0.5555555555555556
+      },
+      "lineup_woba_vs_sp_mix_diff": {
+        "count": 5,
+        "pct": 0.5555555555555556
+      },
+      "consensus_total": {
+        "count": 4,
+        "pct": 0.4444444444444444
+      },
+      "nomarket_pred_f5_margin": {
+        "count": 3,
+        "pct": 0.3333333333333333
+      },
+      "sp_k_bb_diff": {
+        "count": 3,
+        "pct": 0.3333333333333333
+      },
+      "lineup_bb_k_ratio_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "is_interleague": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "sp_xfip_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "lineup_xwoba_vs_sp_mix_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      }
+    }
+  },
+  "total": {
+    "walkforward_overall_rmse": 4.422568673252372,
+    "walkforward_overall_mae": 3.4637757478375772,
+    "walkforward_calibrated_rmse": 4.3781013346494495,
+    "walkforward_n_oof": 20725,
+    "n_samples": 25648,
+    "n_features": 4,
+    "features": [
+      "consensus_total",
+      "is_doubleheader",
+      "num_books",
+      "temp"
+    ],
+    "has_calibrator": true,
+    "sample_weight_half_life": 3
+  },
+  "total_walkforward": {
+    "fold_results": [
+      {
+        "fold": 1,
+        "test_season": 2017,
+        "n_train": 4923,
+        "n_test": 2466,
+        "n_features": 2,
+        "features": [
+          "consensus_total",
+          "sp_fip_x_momentum_diff"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [
+          "sp_fip_x_momentum_diff"
+        ],
+        "rmse": 4.486208125823987,
+        "mae": 3.5365908551970247,
+        "time_seconds": 13.188984155654907
+      },
+      {
+        "fold": 2,
+        "test_season": 2018,
+        "n_train": 7389,
+        "n_test": 2489,
+        "n_features": 1,
+        "features": [
+          "consensus_total"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [],
+        "rmse": 4.472928386888745,
+        "mae": 3.5444619570357006,
+        "time_seconds": 12.17134714126587
+      },
+      {
+        "fold": 3,
+        "test_season": 2019,
+        "n_train": 9878,
+        "n_test": 2516,
+        "n_features": 2,
+        "features": [
+          "consensus_total",
+          "temp"
+        ],
+        "confirmed": [
+          "consensus_total",
+          "temp"
+        ],
+        "tentative": [],
+        "rmse": 4.62447519638306,
+        "mae": 3.620996193779671,
+        "time_seconds": 9.661080121994019
+      },
+      {
+        "fold": 4,
+        "test_season": 2020,
+        "n_train": 12394,
+        "n_test": 868,
+        "n_features": 3,
+        "features": [
+          "consensus_total",
+          "is_doubleheader",
+          "temp"
+        ],
+        "confirmed": [
+          "consensus_total",
+          "temp"
+        ],
+        "tentative": [
+          "is_doubleheader"
+        ],
+        "rmse": 4.372301006506193,
+        "mae": 3.4052878101849884,
+        "time_seconds": 15.149025201797485
+      },
+      {
+        "fold": 5,
+        "test_season": 2021,
+        "n_train": 13262,
+        "n_test": 2446,
+        "n_features": 4,
+        "features": [
+          "consensus_total",
+          "is_doubleheader",
+          "lineup_woba_vs_sp_mix_diff",
+          "temp"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [
+          "is_doubleheader",
+          "lineup_woba_vs_sp_mix_diff",
+          "temp"
+        ],
+        "rmse": 4.65174070544437,
+        "mae": 3.629620739015905,
+        "time_seconds": 17.364470958709717
+      },
+      {
+        "fold": 6,
+        "test_season": 2022,
+        "n_train": 15708,
+        "n_test": 2337,
+        "n_features": 5,
+        "features": [
+          "consensus_total",
+          "is_doubleheader",
+          "lineup_xwoba_vs_sp_mix_diff",
+          "num_books",
+          "temp"
+        ],
+        "confirmed": [
+          "consensus_total",
+          "is_doubleheader"
+        ],
+        "tentative": [
+          "lineup_xwoba_vs_sp_mix_diff",
+          "num_books",
+          "temp"
+        ],
+        "rmse": 4.40059840114855,
+        "mae": 3.426737809670905,
+        "time_seconds": 17.732800006866455
+      },
+      {
+        "fold": 7,
+        "test_season": 2023,
+        "n_train": 18045,
+        "n_test": 2558,
+        "n_features": 5,
+        "features": [
+          "consensus_total",
+          "is_doubleheader",
+          "lineup_top_heavy_diff",
+          "num_books",
+          "temp"
+        ],
+        "confirmed": [
+          "consensus_total",
+          "lineup_top_heavy_diff",
+          "num_books",
+          "temp"
+        ],
+        "tentative": [
+          "is_doubleheader"
+        ],
+        "rmse": 4.290651413236013,
+        "mae": 3.3711332941633168,
+        "time_seconds": 19.831135034561157
+      },
+      {
+        "fold": 8,
+        "test_season": 2024,
+        "n_train": 20603,
+        "n_test": 2513,
+        "n_features": 6,
+        "features": [
+          "consensus_total",
+          "is_doubleheader",
+          "lineup_top_heavy_diff",
+          "num_books",
+          "sp_adj_fip_diff",
+          "temp"
+        ],
+        "confirmed": [
+          "consensus_total",
+          "is_doubleheader",
+          "temp"
+        ],
+        "tentative": [
+          "lineup_top_heavy_diff",
+          "num_books",
+          "sp_adj_fip_diff"
+        ],
+        "rmse": 4.099911052765138,
+        "mae": 3.215293636276482,
+        "time_seconds": 22.675782918930054
+      },
+      {
+        "fold": 9,
+        "test_season": 2025,
+        "n_train": 23116,
+        "n_test": 2532,
+        "n_features": 8,
+        "features": [
+          "consensus_total",
+          "is_doubleheader",
+          "lineup_top_heavy_diff",
+          "lineup_woba_vs_sp_mix_diff",
+          "num_books",
+          "sp_csw_pct_diff",
+          "sp_k_bb_diff",
+          "temp"
+        ],
+        "confirmed": [
+          "consensus_total",
+          "lineup_top_heavy_diff",
+          "num_books",
+          "temp"
+        ],
+        "tentative": [
+          "is_doubleheader",
+          "lineup_woba_vs_sp_mix_diff",
+          "sp_csw_pct_diff",
+          "sp_k_bb_diff"
+        ],
+        "rmse": 4.354701674223812,
+        "mae": 3.391550871998213,
+        "time_seconds": 23.29688787460327
+      }
+    ],
+    "feature_stability": {
+      "consensus_total": {
+        "count": 9,
+        "pct": 1.0
+      },
+      "temp": {
+        "count": 7,
+        "pct": 0.7777777777777778
+      },
+      "is_doubleheader": {
+        "count": 6,
+        "pct": 0.6666666666666666
+      },
+      "num_books": {
+        "count": 4,
+        "pct": 0.4444444444444444
+      },
+      "lineup_top_heavy_diff": {
+        "count": 3,
+        "pct": 0.3333333333333333
+      },
+      "lineup_woba_vs_sp_mix_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "sp_fip_x_momentum_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "lineup_xwoba_vs_sp_mix_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "sp_adj_fip_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "sp_csw_pct_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "sp_k_bb_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      }
+    }
+  },
+  "f5_margin": {
+    "walkforward_overall_rmse": 3.368582606908534,
+    "walkforward_overall_mae": 2.5515864627725415,
+    "walkforward_calibrated_rmse": 3.3465865360649323,
+    "walkforward_n_oof": 21108,
+    "n_samples": 26031,
+    "n_features": 3,
+    "features": [
+      "consensus_total",
+      "market_implied_prob",
+      "market_logit"
+    ],
+    "has_calibrator": true
+  },
+  "f5_margin_walkforward": {
+    "fold_results": [
+      {
+        "fold": 1,
+        "test_season": 2017,
+        "n_train": 4923,
+        "n_test": 2466,
+        "n_features": 2,
+        "features": [
+          "market_implied_prob",
+          "market_logit"
+        ],
+        "confirmed": [
+          "market_implied_prob",
+          "market_logit"
+        ],
+        "tentative": [],
+        "rmse": 3.4706240020444348,
+        "mae": 2.6716672918213185,
+        "time_seconds": 12.552542209625244
+      },
+      {
+        "fold": 2,
+        "test_season": 2018,
+        "n_train": 7389,
+        "n_test": 2489,
+        "n_features": 2,
+        "features": [
+          "market_implied_prob",
+          "market_logit"
+        ],
+        "confirmed": [
+          "market_implied_prob",
+          "market_logit"
+        ],
+        "tentative": [],
+        "rmse": 3.292351044058481,
+        "mae": 2.4844537146863566,
+        "time_seconds": 15.195577621459961
+      },
+      {
+        "fold": 3,
+        "test_season": 2019,
+        "n_train": 9878,
+        "n_test": 2516,
+        "n_features": 3,
+        "features": [
+          "market_implied_prob",
+          "market_logit",
+          "num_books"
+        ],
+        "confirmed": [
+          "market_implied_prob",
+          "market_logit",
+          "num_books"
+        ],
+        "tentative": [],
+        "rmse": 3.4667723568465325,
+        "mae": 2.6033337118186646,
+        "time_seconds": 14.137674808502197
+      },
+      {
+        "fold": 4,
+        "test_season": 2020,
+        "n_train": 12394,
+        "n_test": 979,
+        "n_features": 3,
+        "features": [
+          "market_implied_prob",
+          "market_logit",
+          "num_books"
+        ],
+        "confirmed": [
+          "market_implied_prob",
+          "market_logit",
+          "num_books"
+        ],
+        "tentative": [],
+        "rmse": 3.5136029679819836,
+        "mae": 2.6432805571693687,
+        "time_seconds": 9.599389791488647
+      },
+      {
+        "fold": 5,
+        "test_season": 2021,
+        "n_train": 13373,
+        "n_test": 2579,
+        "n_features": 4,
+        "features": [
+          "market_implied_prob",
+          "market_logit",
+          "num_books",
+          "sp_rest_days_diff"
+        ],
+        "confirmed": [
+          "market_implied_prob",
+          "market_logit",
+          "num_books",
+          "sp_rest_days_diff"
+        ],
+        "tentative": [],
+        "rmse": 3.4462904582931793,
+        "mae": 2.627698117392874,
+        "time_seconds": 16.141841888427734
+      },
+      {
+        "fold": 6,
+        "test_season": 2022,
+        "n_train": 15952,
+        "n_test": 2476,
+        "n_features": 4,
+        "features": [
+          "consensus_total",
+          "market_implied_prob",
+          "market_logit",
+          "sp_rest_days_diff"
+        ],
+        "confirmed": [
+          "consensus_total",
+          "market_implied_prob",
+          "market_logit",
+          "sp_rest_days_diff"
+        ],
+        "tentative": [],
+        "rmse": 3.3423289484103145,
+        "mae": 2.5191398527359805,
+        "time_seconds": 15.491518259048462
+      },
+      {
+        "fold": 7,
+        "test_season": 2023,
+        "n_train": 18428,
+        "n_test": 2558,
+        "n_features": 6,
+        "features": [
+          "consensus_total",
+          "market_implied_prob",
+          "market_logit",
+          "sp_k_x_lineup_k_diff",
+          "sp_season_ip_diff",
+          "sp_xfip_diff"
+        ],
+        "confirmed": [
+          "consensus_total",
+          "market_implied_prob",
+          "market_logit",
+          "sp_xfip_diff"
+        ],
+        "tentative": [
+          "sp_k_x_lineup_k_diff",
+          "sp_season_ip_diff"
+        ],
+        "rmse": 3.3449388674955154,
+        "mae": 2.5187185847637945,
+        "time_seconds": 21.955931901931763
+      },
+      {
+        "fold": 8,
+        "test_season": 2024,
+        "n_train": 20986,
+        "n_test": 2513,
+        "n_features": 6,
+        "features": [
+          "consensus_total",
+          "market_implied_prob",
+          "market_logit",
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff"
+        ],
+        "confirmed": [
+          "consensus_total",
+          "market_implied_prob",
+          "market_logit",
+          "sp_season_ip_diff",
+          "sp_xfip_diff"
+        ],
+        "tentative": [
+          "sp_whiff_x_lineup_ops_diff"
+        ],
+        "rmse": 3.2755901653536665,
+        "mae": 2.492311298105902,
+        "time_seconds": 21.397277116775513
+      },
+      {
+        "fold": 9,
+        "test_season": 2025,
+        "n_train": 23499,
+        "n_test": 2532,
+        "n_features": 5,
+        "features": [
+          "consensus_total",
+          "market_implied_prob",
+          "market_logit",
+          "sp_k_bb_diff",
+          "sp_season_ip_diff"
+        ],
+        "confirmed": [
+          "consensus_total",
+          "market_implied_prob",
+          "market_logit",
+          "sp_k_bb_diff",
+          "sp_season_ip_diff"
+        ],
+        "tentative": [],
+        "rmse": 3.243526150147549,
+        "mae": 2.4599947797061965,
+        "time_seconds": 23.22201895713806
+      }
+    ],
+    "feature_stability": {
+      "market_implied_prob": {
+        "count": 9,
+        "pct": 1.0
+      },
+      "market_logit": {
+        "count": 9,
+        "pct": 1.0
+      },
+      "consensus_total": {
+        "count": 4,
+        "pct": 0.4444444444444444
+      },
+      "num_books": {
+        "count": 3,
+        "pct": 0.3333333333333333
+      },
+      "sp_season_ip_diff": {
+        "count": 3,
+        "pct": 0.3333333333333333
+      },
+      "sp_rest_days_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "sp_xfip_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "sp_k_x_lineup_k_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "sp_whiff_x_lineup_ops_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "sp_k_bb_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      }
+    }
+  },
+  "f5_total": {
+    "walkforward_overall_rmse": 3.2852646526782885,
+    "walkforward_overall_mae": 2.5827464919331873,
+    "walkforward_calibrated_rmse": 3.2748314497350712,
+    "walkforward_n_oof": 21108,
+    "n_samples": 26031,
+    "n_features": 1,
+    "features": [
+      "consensus_total"
+    ],
+    "has_calibrator": true
+  },
+  "f5_total_walkforward": {
+    "fold_results": [
+      {
+        "fold": 1,
+        "test_season": 2017,
+        "n_train": 4923,
+        "n_test": 2466,
+        "n_features": 1,
+        "features": [
+          "consensus_total"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [],
+        "rmse": 3.4063211848226653,
+        "mae": 2.7419067011165694,
+        "time_seconds": 6.987399339675903
+      },
+      {
+        "fold": 2,
+        "test_season": 2018,
+        "n_train": 7389,
+        "n_test": 2489,
+        "n_features": 1,
+        "features": [
+          "consensus_total"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [],
+        "rmse": 3.3395496161130165,
+        "mae": 2.6548446040883413,
+        "time_seconds": 12.157326221466064
+      },
+      {
+        "fold": 3,
+        "test_season": 2019,
+        "n_train": 9878,
+        "n_test": 2516,
+        "n_features": 1,
+        "features": [
+          "consensus_total"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [],
+        "rmse": 3.429561698917818,
+        "mae": 2.7102880448529376,
+        "time_seconds": 7.743613243103027
+      },
+      {
+        "fold": 4,
+        "test_season": 2020,
+        "n_train": 12394,
+        "n_test": 979,
+        "n_features": 3,
+        "features": [
+          "consensus_total",
+          "is_doubleheader",
+          "sp_k_x_lineup_k_diff"
+        ],
+        "confirmed": [
+          "consensus_total",
+          "is_doubleheader"
+        ],
+        "tentative": [
+          "sp_k_x_lineup_k_diff"
+        ],
+        "rmse": 3.4454607851681582,
+        "mae": 2.658725257791708,
+        "time_seconds": 16.00789499282837
+      },
+      {
+        "fold": 5,
+        "test_season": 2021,
+        "n_train": 13373,
+        "n_test": 2579,
+        "n_features": 2,
+        "features": [
+          "consensus_total",
+          "is_doubleheader"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [
+          "is_doubleheader"
+        ],
+        "rmse": 3.203987279745333,
+        "mae": 2.478392420234769,
+        "time_seconds": 16.45302724838257
+      },
+      {
+        "fold": 6,
+        "test_season": 2022,
+        "n_train": 15952,
+        "n_test": 2476,
+        "n_features": 3,
+        "features": [
+          "consensus_total",
+          "is_doubleheader",
+          "lineup_xwoba_vs_sp_mix_diff"
+        ],
+        "confirmed": [
+          "consensus_total",
+          "is_doubleheader"
+        ],
+        "tentative": [
+          "lineup_xwoba_vs_sp_mix_diff"
+        ],
+        "rmse": 3.184731811747402,
+        "mae": 2.4763225813265377,
+        "time_seconds": 18.0436270236969
+      },
+      {
+        "fold": 7,
+        "test_season": 2023,
+        "n_train": 18428,
+        "n_test": 2558,
+        "n_features": 5,
+        "features": [
+          "consensus_total",
+          "lineup_xwoba_vs_sp_mix_diff",
+          "nomarket_pred_nrfi",
+          "num_books",
+          "temp"
+        ],
+        "confirmed": [
+          "consensus_total",
+          "lineup_xwoba_vs_sp_mix_diff",
+          "num_books",
+          "temp"
+        ],
+        "tentative": [
+          "nomarket_pred_nrfi"
+        ],
+        "rmse": 3.309020526847889,
+        "mae": 2.61299636323905,
+        "time_seconds": 19.245086908340454
+      },
+      {
+        "fold": 8,
+        "test_season": 2024,
+        "n_train": 20986,
+        "n_test": 2513,
+        "n_features": 5,
+        "features": [
+          "consensus_f5_total",
+          "consensus_total",
+          "f5_market_logit",
+          "num_books",
+          "temp"
+        ],
+        "confirmed": [
+          "consensus_f5_total",
+          "consensus_total",
+          "num_books"
+        ],
+        "tentative": [
+          "f5_market_logit",
+          "temp"
+        ],
+        "rmse": 3.133190403754688,
+        "mae": 2.485450119503551,
+        "time_seconds": 20.59452509880066
+      },
+      {
+        "fold": 9,
+        "test_season": 2025,
+        "n_train": 23499,
+        "n_test": 2532,
+        "n_features": 8,
+        "features": [
+          "consensus_f5_total",
+          "consensus_total",
+          "f5_market_implied_prob",
+          "f5_market_logit",
+          "lineup_woba_vs_sp_mix_diff",
+          "num_books",
+          "team_rest_days_diff",
+          "temp"
+        ],
+        "confirmed": [
+          "consensus_f5_total",
+          "consensus_total",
+          "f5_market_logit"
+        ],
+        "tentative": [
+          "f5_market_implied_prob",
+          "lineup_woba_vs_sp_mix_diff",
+          "num_books",
+          "team_rest_days_diff",
+          "temp"
+        ],
+        "rmse": 3.202275349958279,
+        "mae": 2.477115500924335,
+        "time_seconds": 23.42003107070923
+      }
+    ],
+    "feature_stability": {
+      "consensus_total": {
+        "count": 9,
+        "pct": 1.0
+      },
+      "is_doubleheader": {
+        "count": 3,
+        "pct": 0.3333333333333333
+      },
+      "num_books": {
+        "count": 3,
+        "pct": 0.3333333333333333
+      },
+      "temp": {
+        "count": 3,
+        "pct": 0.3333333333333333
+      },
+      "lineup_xwoba_vs_sp_mix_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "consensus_f5_total": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "f5_market_logit": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "sp_k_x_lineup_k_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "nomarket_pred_nrfi": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "f5_market_implied_prob": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "lineup_woba_vs_sp_mix_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "team_rest_days_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      }
+    }
+  },
+  "nrfi": {
+    "walkforward_overall_brier": 0.24738059809187593,
+    "walkforward_overall_logloss": 0.6879409064632863,
+    "walkforward_overall_auc": 0.5545242081373718,
+    "walkforward_base_rate": 0.4953098351335986,
+    "walkforward_naive_brier": 0.24997800235352602,
+    "walkforward_n_oof": 21108,
+    "n_samples": 26031,
+    "n_features": 1,
+    "features": [
+      "consensus_total"
+    ]
+  },
+  "nrfi_walkforward": {
+    "fold_results": [
+      {
+        "fold": 1,
+        "test_season": 2017,
+        "n_train": 4923,
+        "n_test": 2466,
+        "n_features": 1,
+        "features": [
+          "consensus_total"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [],
+        "brier": 0.24959403276443481,
+        "logloss": 0.6923749169102773,
+        "auc": 0.5153035391167095,
+        "time_seconds": 8.934640884399414
+      },
+      {
+        "fold": 2,
+        "test_season": 2018,
+        "n_train": 7389,
+        "n_test": 2489,
+        "n_features": 1,
+        "features": [
+          "consensus_total"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [],
+        "brier": 0.24966561794281006,
+        "logloss": 0.6924809461778536,
+        "auc": 0.5301877435901409,
+        "time_seconds": 13.38722825050354
+      },
+      {
+        "fold": 3,
+        "test_season": 2019,
+        "n_train": 9878,
+        "n_test": 2516,
+        "n_features": 1,
+        "features": [
+          "consensus_total"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [],
+        "brier": 0.24842846393585205,
+        "logloss": 0.689962732144183,
+        "auc": 0.5309713783578627,
+        "time_seconds": 8.422696828842163
+      },
+      {
+        "fold": 4,
+        "test_season": 2020,
+        "n_train": 12394,
+        "n_test": 979,
+        "n_features": 3,
+        "features": [
+          "consensus_total",
+          "sp_groundball_pct_diff",
+          "sp_pitch_mix_entropy_diff"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [
+          "sp_groundball_pct_diff",
+          "sp_pitch_mix_entropy_diff"
+        ],
+        "brier": 0.25185513496398926,
+        "logloss": 0.6970285225734192,
+        "auc": 0.5168153382278016,
+        "time_seconds": 15.08408498764038
+      },
+      {
+        "fold": 5,
+        "test_season": 2021,
+        "n_train": 13373,
+        "n_test": 2579,
+        "n_features": 1,
+        "features": [
+          "consensus_total"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [],
+        "brier": 0.245029479265213,
+        "logloss": 0.6827933543026149,
+        "auc": 0.5635898192238001,
+        "time_seconds": 11.49452018737793
+      },
+      {
+        "fold": 6,
+        "test_season": 2022,
+        "n_train": 15952,
+        "n_test": 2476,
+        "n_features": 1,
+        "features": [
+          "consensus_total"
+        ],
+        "confirmed": [
+          "consensus_total"
+        ],
+        "tentative": [],
+        "brier": 0.2477974146604538,
+        "logloss": 0.6890497910781154,
+        "auc": 0.5461775441946859,
+        "time_seconds": 14.449925899505615
+      },
+      {
+        "fold": 7,
+        "test_season": 2023,
+        "n_train": 18428,
+        "n_test": 2558,
+        "n_features": 2,
+        "features": [
+          "consensus_total",
+          "num_books"
+        ],
+        "confirmed": [
+          "consensus_total",
+          "num_books"
+        ],
+        "tentative": [],
+        "brier": 0.24556280672550201,
+        "logloss": 0.6840536161665156,
+        "auc": 0.5581504983183401,
+        "time_seconds": 17.66781497001648
+      },
+      {
+        "fold": 8,
+        "test_season": 2024,
+        "n_train": 20986,
+        "n_test": 2513,
+        "n_features": 5,
+        "features": [
+          "consensus_f1_total",
+          "consensus_total",
+          "lineup_woba_vs_sp_mix_diff",
+          "market_logit",
+          "num_books"
+        ],
+        "confirmed": [
+          "consensus_f1_total",
+          "consensus_total",
+          "num_books"
+        ],
+        "tentative": [
+          "lineup_woba_vs_sp_mix_diff",
+          "market_logit"
+        ],
+        "brier": 0.24424782395362854,
+        "logloss": 0.6820523432673915,
+        "auc": 0.5822169773500427,
+        "time_seconds": 21.485504865646362
+      },
+      {
+        "fold": 9,
+        "test_season": 2025,
+        "n_train": 23499,
+        "n_test": 2532,
+        "n_features": 7,
+        "features": [
+          "consensus_f1_total",
+          "consensus_total",
+          "lineup_top_heavy_diff",
+          "lineup_woba_vs_sp_mix_diff",
+          "lineup_xwoba_vs_sp_mix_diff",
+          "market_logit",
+          "num_books"
+        ],
+        "confirmed": [
+          "consensus_f1_total",
+          "consensus_total"
+        ],
+        "tentative": [
+          "lineup_top_heavy_diff",
+          "lineup_woba_vs_sp_mix_diff",
+          "lineup_xwoba_vs_sp_mix_diff",
+          "market_logit",
+          "num_books"
+        ],
+        "brier": 0.24714021384716034,
+        "logloss": 0.6875670959228419,
+        "auc": 0.5801182758388272,
+        "time_seconds": 23.32822608947754
+      }
+    ],
+    "feature_stability": {
+      "consensus_total": {
+        "count": 9,
+        "pct": 1.0
+      },
+      "num_books": {
+        "count": 3,
+        "pct": 0.3333333333333333
+      },
+      "consensus_f1_total": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "lineup_woba_vs_sp_mix_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "market_logit": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "sp_groundball_pct_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "sp_pitch_mix_entropy_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "lineup_top_heavy_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "lineup_xwoba_vs_sp_mix_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      }
+    }
+  }
+}

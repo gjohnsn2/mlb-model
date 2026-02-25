@@ -88,6 +88,7 @@ def run_boruta(X, y, name="model", n_iter=100, alpha=0.05):
     confirmed = X.columns[selector.support_].tolist()
     tentative = X.columns[selector.support_weak_].tolist()
     rejected = X.columns[~selector.support_ & ~selector.support_weak_].tolist()
+    rankings = {col: int(rank) for col, rank in zip(X.columns, selector.ranking_)}
 
     log.info(f"  Confirmed: {len(confirmed)}")
     log.info(f"  Tentative: {len(tentative)}")
@@ -98,7 +99,64 @@ def run_boruta(X, y, name="model", n_iter=100, alpha=0.05):
     for f in tentative:
         log.info(f"    ~ {f}")
 
-    return confirmed, tentative, rejected
+    return confirmed, tentative, rejected, rankings
+
+
+def run_boruta_classifier(X, y, name="model", n_iter=100, alpha=0.05):
+    """
+    Run Boruta feature selection with XGBClassifier for binary targets.
+    Returns lists of confirmed, tentative, rejected features + rankings dict.
+    """
+    log.info(f"\n{'='*60}")
+    log.info(f"Running Boruta (classifier) for {name}")
+    log.info(f"  Samples: {len(X)}, Features: {X.shape[1]}")
+    log.info(f"  Iterations: {n_iter}, Alpha: {alpha}")
+
+    estimator = xgb.XGBClassifier(
+        n_estimators=100,
+        max_depth=5,
+        learning_rate=0.1,
+        subsample=0.8,
+        colsample_bytree=0.8,
+        min_child_weight=3,
+        objective="binary:logistic",
+        eval_metric="logloss",
+        random_state=42,
+        n_jobs=-1,
+        verbosity=0,
+    )
+
+    selector = BorutaPy(
+        estimator=estimator,
+        n_estimators="auto",
+        max_iter=n_iter,
+        alpha=alpha,
+        random_state=42,
+        verbose=0,
+    )
+
+    log.info("  Fitting Boruta classifier (this may take a few minutes)...")
+
+    X_clean = X.fillna(0)
+    y_clean = y.fillna(0).astype(int)
+
+    selector.fit(X_clean.values, y_clean.values)
+
+    confirmed = X.columns[selector.support_].tolist()
+    tentative = X.columns[selector.support_weak_].tolist()
+    rejected = X.columns[~selector.support_ & ~selector.support_weak_].tolist()
+    rankings = {col: int(rank) for col, rank in zip(X.columns, selector.ranking_)}
+
+    log.info(f"  Confirmed: {len(confirmed)}")
+    log.info(f"  Tentative: {len(tentative)}")
+    log.info(f"  Rejected: {len(rejected)}")
+
+    for f in confirmed:
+        log.info(f"    + {f}")
+    for f in tentative:
+        log.info(f"    ~ {f}")
+
+    return confirmed, tentative, rejected, rankings
 
 
 def main():

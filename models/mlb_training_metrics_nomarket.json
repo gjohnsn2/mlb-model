@@ -1,0 +1,1585 @@
+{
+  "margin": {
+    "walkforward_overall_rmse": 4.524009403155965,
+    "walkforward_overall_mae": 3.531048395217002,
+    "walkforward_calibrated_rmse": 4.485711508040336,
+    "walkforward_n_oof": 20688,
+    "n_samples": 25611,
+    "n_features": 8,
+    "features": [
+      "lineup_bb_k_ratio_diff",
+      "lineup_ops_vs_hand_diff",
+      "sp_k_bb_diff",
+      "sp_k_pct_diff",
+      "sp_season_ip_diff",
+      "sp_whiff_x_lineup_ops_diff",
+      "sp_xfip_diff",
+      "team_run_diff_10_diff"
+    ],
+    "has_calibrator": true,
+    "sample_weight_half_life": 3
+  },
+  "margin_walkforward": {
+    "fold_results": [
+      {
+        "fold": 1,
+        "test_season": 2017,
+        "n_train": 4923,
+        "n_test": 2466,
+        "n_features": 3,
+        "features": [
+          "sp_k_bb_diff",
+          "sp_xfip_diff",
+          "team_rest_days_diff"
+        ],
+        "confirmed": [
+          "sp_k_bb_diff"
+        ],
+        "tentative": [
+          "sp_xfip_diff",
+          "team_rest_days_diff"
+        ],
+        "rmse": 4.626898654272458,
+        "mae": 3.6467998596627265,
+        "time_seconds": 14.378801107406616
+      },
+      {
+        "fold": 2,
+        "test_season": 2018,
+        "n_train": 7389,
+        "n_test": 2461,
+        "n_features": 7,
+        "features": [
+          "sp_adj_fip_diff",
+          "sp_csw_pct_diff",
+          "sp_k_bb_diff",
+          "sp_k_x_lineup_k_diff",
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff"
+        ],
+        "confirmed": [
+          "sp_csw_pct_diff",
+          "sp_k_bb_diff",
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff"
+        ],
+        "tentative": [
+          "sp_adj_fip_diff",
+          "sp_k_x_lineup_k_diff"
+        ],
+        "rmse": 4.528486509554749,
+        "mae": 3.5305751991425693,
+        "time_seconds": 20.122007846832275
+      },
+      {
+        "fold": 3,
+        "test_season": 2019,
+        "n_train": 9850,
+        "n_test": 2460,
+        "n_features": 3,
+        "features": [
+          "lineup_bb_k_ratio_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff"
+        ],
+        "confirmed": [
+          "lineup_bb_k_ratio_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff"
+        ],
+        "tentative": [],
+        "rmse": 4.624299799468266,
+        "mae": 3.5960251584086884,
+        "time_seconds": 20.33940625190735
+      },
+      {
+        "fold": 4,
+        "test_season": 2020,
+        "n_train": 12310,
+        "n_test": 951,
+        "n_features": 7,
+        "features": [
+          "lineup_bb_k_ratio_diff",
+          "lineup_ops_vs_hand_diff",
+          "sp_k_pct_diff",
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff",
+          "team_run_diff_10_diff"
+        ],
+        "confirmed": [
+          "lineup_bb_k_ratio_diff",
+          "sp_k_pct_diff",
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff",
+          "team_run_diff_10_diff"
+        ],
+        "tentative": [
+          "lineup_ops_vs_hand_diff"
+        ],
+        "rmse": 4.684183333903518,
+        "mae": 3.607168592607417,
+        "time_seconds": 23.738245248794556
+      },
+      {
+        "fold": 5,
+        "test_season": 2021,
+        "n_train": 13261,
+        "n_test": 2467,
+        "n_features": 8,
+        "features": [
+          "lineup_bb_k_ratio_diff",
+          "lineup_woba_vs_sp_mix_diff",
+          "sp_k_bb_diff",
+          "sp_k_pct_diff",
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff",
+          "team_run_diff_10_diff"
+        ],
+        "confirmed": [
+          "lineup_bb_k_ratio_diff",
+          "sp_k_pct_diff",
+          "sp_season_ip_diff",
+          "sp_xfip_diff"
+        ],
+        "tentative": [
+          "lineup_woba_vs_sp_mix_diff",
+          "sp_k_bb_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "team_run_diff_10_diff"
+        ],
+        "rmse": 4.51841543620159,
+        "mae": 3.527318222659259,
+        "time_seconds": 21.25665783882141
+      },
+      {
+        "fold": 6,
+        "test_season": 2022,
+        "n_train": 15728,
+        "n_test": 2462,
+        "n_features": 9,
+        "features": [
+          "lineup_bb_k_ratio_diff",
+          "lineup_ops_vs_hand_diff",
+          "sp_csw_pct_diff",
+          "sp_k_bb_diff",
+          "sp_k_pct_diff",
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff",
+          "team_run_diff_10_diff"
+        ],
+        "confirmed": [
+          "lineup_bb_k_ratio_diff",
+          "sp_k_bb_diff",
+          "sp_k_pct_diff",
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff",
+          "team_run_diff_10_diff"
+        ],
+        "tentative": [
+          "lineup_ops_vs_hand_diff",
+          "sp_csw_pct_diff"
+        ],
+        "rmse": 4.335067004228502,
+        "mae": 3.3720102946687818,
+        "time_seconds": 23.636812210083008
+      },
+      {
+        "fold": 7,
+        "test_season": 2023,
+        "n_train": 18190,
+        "n_test": 2474,
+        "n_features": 8,
+        "features": [
+          "lineup_bb_k_ratio_diff",
+          "lineup_power_diff",
+          "sp_csw_pct_diff",
+          "sp_k_bb_diff",
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff",
+          "team_run_diff_10_diff"
+        ],
+        "confirmed": [
+          "lineup_bb_k_ratio_diff",
+          "sp_k_bb_diff",
+          "sp_season_ip_diff",
+          "sp_xfip_diff",
+          "team_run_diff_10_diff"
+        ],
+        "tentative": [
+          "lineup_power_diff",
+          "sp_csw_pct_diff",
+          "sp_whiff_x_lineup_ops_diff"
+        ],
+        "rmse": 4.498751259497972,
+        "mae": 3.5139738961218736,
+        "time_seconds": 24.895066738128662
+      },
+      {
+        "fold": 8,
+        "test_season": 2024,
+        "n_train": 20664,
+        "n_test": 2471,
+        "n_features": 12,
+        "features": [
+          "bb_rate_diff",
+          "lineup_bb_k_ratio_diff",
+          "lineup_ops_vs_hand_diff",
+          "lineup_power_diff",
+          "lineup_xwoba_vs_sp_mix_diff",
+          "sp_k_bb_diff",
+          "sp_k_x_lineup_k_diff",
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff",
+          "star_missing_ops_diff",
+          "team_run_diff_10_diff"
+        ],
+        "confirmed": [
+          "lineup_bb_k_ratio_diff",
+          "lineup_xwoba_vs_sp_mix_diff",
+          "sp_k_bb_diff",
+          "sp_k_x_lineup_k_diff",
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff",
+          "star_missing_ops_diff",
+          "team_run_diff_10_diff"
+        ],
+        "tentative": [
+          "bb_rate_diff",
+          "lineup_ops_vs_hand_diff",
+          "lineup_power_diff"
+        ],
+        "rmse": 4.396637704604686,
+        "mae": 3.474675490738861,
+        "time_seconds": 26.675463914871216
+      },
+      {
+        "fold": 9,
+        "test_season": 2025,
+        "n_train": 23135,
+        "n_test": 2476,
+        "n_features": 12,
+        "features": [
+          "lineup_bb_k_ratio_diff",
+          "lineup_ops_vs_hand_diff",
+          "lineup_power_diff",
+          "lineup_xwoba_vs_sp_mix_diff",
+          "sp_k_bb_diff",
+          "sp_k_pct_diff",
+          "sp_k_x_lineup_k_diff",
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff",
+          "star_missing_ops_diff",
+          "team_run_diff_10_diff"
+        ],
+        "confirmed": [
+          "lineup_bb_k_ratio_diff",
+          "lineup_ops_vs_hand_diff",
+          "lineup_power_diff",
+          "lineup_xwoba_vs_sp_mix_diff",
+          "sp_k_bb_diff",
+          "sp_k_x_lineup_k_diff",
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff",
+          "star_missing_ops_diff",
+          "team_run_diff_10_diff"
+        ],
+        "tentative": [
+          "sp_k_pct_diff"
+        ],
+        "rmse": 4.592063136296969,
+        "mae": 3.5576163176817417,
+        "time_seconds": 30.508819818496704
+      }
+    ],
+    "feature_stability": {
+      "sp_xfip_diff": {
+        "count": 9,
+        "pct": 1.0
+      },
+      "sp_whiff_x_lineup_ops_diff": {
+        "count": 8,
+        "pct": 0.8888888888888888
+      },
+      "sp_k_bb_diff": {
+        "count": 7,
+        "pct": 0.7777777777777778
+      },
+      "sp_season_ip_diff": {
+        "count": 7,
+        "pct": 0.7777777777777778
+      },
+      "lineup_bb_k_ratio_diff": {
+        "count": 7,
+        "pct": 0.7777777777777778
+      },
+      "team_run_diff_10_diff": {
+        "count": 6,
+        "pct": 0.6666666666666666
+      },
+      "lineup_ops_vs_hand_diff": {
+        "count": 4,
+        "pct": 0.4444444444444444
+      },
+      "sp_k_pct_diff": {
+        "count": 4,
+        "pct": 0.4444444444444444
+      },
+      "sp_csw_pct_diff": {
+        "count": 3,
+        "pct": 0.3333333333333333
+      },
+      "sp_k_x_lineup_k_diff": {
+        "count": 3,
+        "pct": 0.3333333333333333
+      },
+      "lineup_power_diff": {
+        "count": 3,
+        "pct": 0.3333333333333333
+      },
+      "lineup_xwoba_vs_sp_mix_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "star_missing_ops_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "team_rest_days_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "sp_adj_fip_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "lineup_woba_vs_sp_mix_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "bb_rate_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      }
+    }
+  },
+  "total": {
+    "walkforward_overall_rmse": 4.566319179201987,
+    "walkforward_overall_mae": 3.6001287826233197,
+    "walkforward_calibrated_rmse": 4.525686138016679,
+    "walkforward_n_oof": 20319,
+    "n_samples": 25242,
+    "n_features": 1,
+    "features": [
+      "temp"
+    ],
+    "has_calibrator": true,
+    "sample_weight_half_life": 3
+  },
+  "total_walkforward": {
+    "fold_results": [
+      {
+        "fold": 1,
+        "test_season": 2017,
+        "n_train": 4923,
+        "n_test": 2466,
+        "n_features": 1,
+        "features": [
+          "temp"
+        ],
+        "confirmed": [
+          "temp"
+        ],
+        "tentative": [],
+        "rmse": 4.54939755182736,
+        "mae": 3.5294037977080954,
+        "time_seconds": 12.632400274276733
+      },
+      {
+        "fold": 2,
+        "test_season": 2018,
+        "n_train": 7389,
+        "n_test": 2461,
+        "n_features": 2,
+        "features": [
+          "lineup_k_rate_diff",
+          "temp"
+        ],
+        "confirmed": [
+          "lineup_k_rate_diff",
+          "temp"
+        ],
+        "tentative": [],
+        "rmse": 4.5673137711223015,
+        "mae": 3.617092646219439,
+        "time_seconds": 16.647971153259277
+      },
+      {
+        "fold": 3,
+        "test_season": 2019,
+        "n_train": 9850,
+        "n_test": 2460,
+        "n_features": 2,
+        "features": [
+          "lineup_k_rate_diff",
+          "temp"
+        ],
+        "confirmed": [
+          "temp"
+        ],
+        "tentative": [
+          "lineup_k_rate_diff"
+        ],
+        "rmse": 4.826691408713501,
+        "mae": 3.74529327338304,
+        "time_seconds": 14.29642391204834
+      },
+      {
+        "fold": 4,
+        "test_season": 2020,
+        "n_train": 12310,
+        "n_test": 840,
+        "n_features": 2,
+        "features": [
+          "temp",
+          "umpire_runs_factor"
+        ],
+        "confirmed": [
+          "temp",
+          "umpire_runs_factor"
+        ],
+        "tentative": [],
+        "rmse": 4.612298156346657,
+        "mae": 3.564358021531786,
+        "time_seconds": 16.025922775268555
+      },
+      {
+        "fold": 5,
+        "test_season": 2021,
+        "n_train": 13150,
+        "n_test": 2348,
+        "n_features": 2,
+        "features": [
+          "lineup_woba_vs_sp_mix_diff",
+          "temp"
+        ],
+        "confirmed": [
+          "lineup_woba_vs_sp_mix_diff",
+          "temp"
+        ],
+        "tentative": [],
+        "rmse": 4.595645825298662,
+        "mae": 3.652616905394364,
+        "time_seconds": 15.067283868789673
+      },
+      {
+        "fold": 6,
+        "test_season": 2022,
+        "n_train": 15498,
+        "n_test": 2323,
+        "n_features": 2,
+        "features": [
+          "lineup_woba_vs_sp_mix_diff",
+          "temp"
+        ],
+        "confirmed": [
+          "temp"
+        ],
+        "tentative": [
+          "lineup_woba_vs_sp_mix_diff"
+        ],
+        "rmse": 4.511408387259208,
+        "mae": 3.59063981783272,
+        "time_seconds": 15.39972710609436
+      },
+      {
+        "fold": 7,
+        "test_season": 2023,
+        "n_train": 17821,
+        "n_test": 2474,
+        "n_features": 1,
+        "features": [
+          "temp"
+        ],
+        "confirmed": [
+          "temp"
+        ],
+        "tentative": [],
+        "rmse": 4.565253583183604,
+        "mae": 3.609019070357783,
+        "time_seconds": 10.15772795677185
+      },
+      {
+        "fold": 8,
+        "test_season": 2024,
+        "n_train": 20295,
+        "n_test": 2471,
+        "n_features": 4,
+        "features": [
+          "lineup_k_rate_vs_hand_diff",
+          "sp_fip_last3_diff",
+          "team_run_diff_10_diff",
+          "temp"
+        ],
+        "confirmed": [
+          "temp"
+        ],
+        "tentative": [
+          "lineup_k_rate_vs_hand_diff",
+          "sp_fip_last3_diff",
+          "team_run_diff_10_diff"
+        ],
+        "rmse": 4.3040931422794815,
+        "mae": 3.4370142187198036,
+        "time_seconds": 17.815957069396973
+      },
+      {
+        "fold": 9,
+        "test_season": 2025,
+        "n_train": 22766,
+        "n_test": 2476,
+        "n_features": 1,
+        "features": [
+          "temp"
+        ],
+        "confirmed": [
+          "temp"
+        ],
+        "tentative": [],
+        "rmse": 4.578947978983317,
+        "mae": 3.634646070600519,
+        "time_seconds": 15.735997200012207
+      }
+    ],
+    "feature_stability": {
+      "temp": {
+        "count": 9,
+        "pct": 1.0
+      },
+      "lineup_k_rate_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "lineup_woba_vs_sp_mix_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "umpire_runs_factor": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "lineup_k_rate_vs_hand_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "sp_fip_last3_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "team_run_diff_10_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      }
+    }
+  },
+  "f5_margin": {
+    "walkforward_overall_rmse": 3.421613831346126,
+    "walkforward_overall_mae": 2.5937034094421367,
+    "walkforward_calibrated_rmse": 3.4019853024973554,
+    "walkforward_n_oof": 20688,
+    "n_samples": 25611,
+    "n_features": 8,
+    "features": [
+      "is_doubleheader",
+      "sp_csw_pct_diff",
+      "sp_k_bb_diff",
+      "sp_k_pct_diff",
+      "sp_season_ip_diff",
+      "sp_whiff_x_lineup_ops_diff",
+      "sp_xfip_diff",
+      "team_run_diff_10_diff"
+    ],
+    "has_calibrator": true
+  },
+  "f5_margin_walkforward": {
+    "fold_results": [
+      {
+        "fold": 1,
+        "test_season": 2017,
+        "n_train": 4923,
+        "n_test": 2466,
+        "n_features": 3,
+        "features": [
+          "sp_k_bb_diff",
+          "sp_k_pct_diff",
+          "sp_xfip_diff"
+        ],
+        "confirmed": [
+          "sp_k_bb_diff",
+          "sp_k_pct_diff"
+        ],
+        "tentative": [
+          "sp_xfip_diff"
+        ],
+        "rmse": 3.5071309070275354,
+        "mae": 2.681223827424412,
+        "time_seconds": 13.295472145080566
+      },
+      {
+        "fold": 2,
+        "test_season": 2018,
+        "n_train": 7389,
+        "n_test": 2461,
+        "n_features": 6,
+        "features": [
+          "sp_adj_fip_diff",
+          "sp_csw_pct_diff",
+          "sp_k_pct_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_whip_last3_diff",
+          "sp_xfip_diff"
+        ],
+        "confirmed": [
+          "sp_adj_fip_diff",
+          "sp_csw_pct_diff",
+          "sp_k_pct_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_whip_last3_diff",
+          "sp_xfip_diff"
+        ],
+        "tentative": [],
+        "rmse": 3.35641244576617,
+        "mae": 2.5262804481533707,
+        "time_seconds": 16.57522201538086
+      },
+      {
+        "fold": 3,
+        "test_season": 2019,
+        "n_train": 9850,
+        "n_test": 2460,
+        "n_features": 6,
+        "features": [
+          "sp_csw_pct_diff",
+          "sp_k_bb_diff",
+          "sp_k_pct_diff",
+          "sp_season_ip_diff",
+          "sp_xfip_diff",
+          "team_run_diff_10_diff"
+        ],
+        "confirmed": [
+          "sp_csw_pct_diff",
+          "sp_k_bb_diff",
+          "sp_xfip_diff"
+        ],
+        "tentative": [
+          "sp_k_pct_diff",
+          "sp_season_ip_diff",
+          "team_run_diff_10_diff"
+        ],
+        "rmse": 3.5439489193451252,
+        "mae": 2.6664007619327137,
+        "time_seconds": 18.621669054031372
+      },
+      {
+        "fold": 4,
+        "test_season": 2020,
+        "n_train": 12310,
+        "n_test": 951,
+        "n_features": 8,
+        "features": [
+          "is_doubleheader",
+          "sp_csw_pct_diff",
+          "sp_k_bb_diff",
+          "sp_k_pct_diff",
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff",
+          "team_run_diff_10_diff"
+        ],
+        "confirmed": [
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff",
+          "team_run_diff_10_diff"
+        ],
+        "tentative": [
+          "is_doubleheader",
+          "sp_csw_pct_diff",
+          "sp_k_bb_diff",
+          "sp_k_pct_diff"
+        ],
+        "rmse": 3.6227766739326386,
+        "mae": 2.7210191102885983,
+        "time_seconds": 20.7499577999115
+      },
+      {
+        "fold": 5,
+        "test_season": 2021,
+        "n_train": 13261,
+        "n_test": 2467,
+        "n_features": 8,
+        "features": [
+          "lineup_bb_k_ratio_diff",
+          "lineup_woba_vs_sp_mix_diff",
+          "sp_csw_pct_diff",
+          "sp_k_pct_diff",
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff",
+          "team_run_diff_10_diff"
+        ],
+        "confirmed": [
+          "sp_csw_pct_diff",
+          "sp_k_pct_diff",
+          "sp_season_ip_diff",
+          "sp_xfip_diff"
+        ],
+        "tentative": [
+          "lineup_bb_k_ratio_diff",
+          "lineup_woba_vs_sp_mix_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "team_run_diff_10_diff"
+        ],
+        "rmse": 3.5051685879819687,
+        "mae": 2.6624185728693206,
+        "time_seconds": 21.864178895950317
+      },
+      {
+        "fold": 6,
+        "test_season": 2022,
+        "n_train": 15728,
+        "n_test": 2462,
+        "n_features": 7,
+        "features": [
+          "is_doubleheader",
+          "lineup_bb_k_ratio_diff",
+          "sp_k_pct_diff",
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff",
+          "team_run_diff_10_diff"
+        ],
+        "confirmed": [
+          "is_doubleheader",
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff"
+        ],
+        "tentative": [
+          "lineup_bb_k_ratio_diff",
+          "sp_k_pct_diff",
+          "team_run_diff_10_diff"
+        ],
+        "rmse": 3.2973910621369487,
+        "mae": 2.481838681411002,
+        "time_seconds": 22.671348094940186
+      },
+      {
+        "fold": 7,
+        "test_season": 2023,
+        "n_train": 18190,
+        "n_test": 2474,
+        "n_features": 7,
+        "features": [
+          "is_doubleheader",
+          "sp_fip_diff",
+          "sp_k_bb_diff",
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff",
+          "team_run_diff_10_diff"
+        ],
+        "confirmed": [
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff",
+          "team_run_diff_10_diff"
+        ],
+        "tentative": [
+          "is_doubleheader",
+          "sp_fip_diff",
+          "sp_k_bb_diff"
+        ],
+        "rmse": 3.4051517670243983,
+        "mae": 2.587400003644019,
+        "time_seconds": 24.196698904037476
+      },
+      {
+        "fold": 8,
+        "test_season": 2024,
+        "n_train": 20664,
+        "n_test": 2471,
+        "n_features": 12,
+        "features": [
+          "bb_rate_diff",
+          "is_doubleheader",
+          "lineup_power_diff",
+          "lineup_xwoba_vs_sp_mix_diff",
+          "sp_csw_pct_diff",
+          "sp_fip_diff",
+          "sp_k_bb_diff",
+          "sp_k_x_lineup_k_diff",
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff",
+          "team_run_diff_10_diff"
+        ],
+        "confirmed": [
+          "bb_rate_diff",
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff"
+        ],
+        "tentative": [
+          "is_doubleheader",
+          "lineup_power_diff",
+          "lineup_xwoba_vs_sp_mix_diff",
+          "sp_csw_pct_diff",
+          "sp_fip_diff",
+          "sp_k_bb_diff",
+          "sp_k_x_lineup_k_diff",
+          "team_run_diff_10_diff"
+        ],
+        "rmse": 3.324169389163144,
+        "mae": 2.55204355181845,
+        "time_seconds": 25.08598494529724
+      },
+      {
+        "fold": 9,
+        "test_season": 2025,
+        "n_train": 23135,
+        "n_test": 2476,
+        "n_features": 14,
+        "features": [
+          "bb_rate_diff",
+          "lineup_bb_k_ratio_diff",
+          "lineup_ops_vs_hand_diff",
+          "lineup_xwoba_vs_sp_mix_diff",
+          "sp_adj_fip_diff",
+          "sp_csw_pct_diff",
+          "sp_k_bb_diff",
+          "sp_k_pct_diff",
+          "sp_k_x_lineup_k_diff",
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff",
+          "sp_xwoba_diff",
+          "team_run_diff_10_diff"
+        ],
+        "confirmed": [
+          "bb_rate_diff",
+          "lineup_ops_vs_hand_diff",
+          "lineup_xwoba_vs_sp_mix_diff",
+          "sp_k_bb_diff",
+          "sp_k_pct_diff",
+          "sp_season_ip_diff",
+          "sp_whiff_x_lineup_ops_diff",
+          "sp_xfip_diff",
+          "team_run_diff_10_diff"
+        ],
+        "tentative": [
+          "lineup_bb_k_ratio_diff",
+          "sp_adj_fip_diff",
+          "sp_csw_pct_diff",
+          "sp_k_x_lineup_k_diff",
+          "sp_xwoba_diff"
+        ],
+        "rmse": 3.3447329950177203,
+        "mae": 2.543063920236169,
+        "time_seconds": 29.179070949554443
+      }
+    ],
+    "feature_stability": {
+      "sp_xfip_diff": {
+        "count": 9,
+        "pct": 1.0
+      },
+      "sp_k_pct_diff": {
+        "count": 7,
+        "pct": 0.7777777777777778
+      },
+      "sp_whiff_x_lineup_ops_diff": {
+        "count": 7,
+        "pct": 0.7777777777777778
+      },
+      "sp_season_ip_diff": {
+        "count": 7,
+        "pct": 0.7777777777777778
+      },
+      "team_run_diff_10_diff": {
+        "count": 7,
+        "pct": 0.7777777777777778
+      },
+      "sp_k_bb_diff": {
+        "count": 6,
+        "pct": 0.6666666666666666
+      },
+      "sp_csw_pct_diff": {
+        "count": 6,
+        "pct": 0.6666666666666666
+      },
+      "is_doubleheader": {
+        "count": 4,
+        "pct": 0.4444444444444444
+      },
+      "lineup_bb_k_ratio_diff": {
+        "count": 3,
+        "pct": 0.3333333333333333
+      },
+      "sp_adj_fip_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "sp_fip_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "bb_rate_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "lineup_xwoba_vs_sp_mix_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "sp_k_x_lineup_k_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "sp_whip_last3_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "lineup_woba_vs_sp_mix_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "lineup_power_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "lineup_ops_vs_hand_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "sp_xwoba_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      }
+    }
+  },
+  "f5_total": {
+    "walkforward_overall_rmse": 3.4071395546928356,
+    "walkforward_overall_mae": 2.6902937095522974,
+    "walkforward_calibrated_rmse": 3.3912559948931755,
+    "walkforward_n_oof": 20688,
+    "n_samples": 25611,
+    "n_features": 1,
+    "features": [
+      "temp"
+    ],
+    "has_calibrator": true
+  },
+  "f5_total_walkforward": {
+    "fold_results": [
+      {
+        "fold": 1,
+        "test_season": 2017,
+        "n_train": 4923,
+        "n_test": 2466,
+        "n_features": 10,
+        "features": [
+          "temp",
+          "is_doubleheader",
+          "team_run_diff_10_diff",
+          "lineup_ops_weighted_diff",
+          "sp_k_bb_diff",
+          "sp_flyball_pct_diff",
+          "is_dome",
+          "sp_adj_fip_diff",
+          "bp_pitches_3d_diff",
+          "sp_fip_x_momentum_diff"
+        ],
+        "confirmed": [],
+        "tentative": [],
+        "rmse": 3.507702616957124,
+        "mae": 2.760053004081522,
+        "time_seconds": 7.394347906112671
+      },
+      {
+        "fold": 2,
+        "test_season": 2018,
+        "n_train": 7389,
+        "n_test": 2461,
+        "n_features": 2,
+        "features": [
+          "team_run_diff_10_diff",
+          "temp"
+        ],
+        "confirmed": [
+          "temp"
+        ],
+        "tentative": [
+          "team_run_diff_10_diff"
+        ],
+        "rmse": 3.410107099113592,
+        "mae": 2.714458486792616,
+        "time_seconds": 15.17817997932434
+      },
+      {
+        "fold": 3,
+        "test_season": 2019,
+        "n_train": 9850,
+        "n_test": 2460,
+        "n_features": 1,
+        "features": [
+          "temp"
+        ],
+        "confirmed": [
+          "temp"
+        ],
+        "tentative": [],
+        "rmse": 3.5581747019697243,
+        "mae": 2.7659374484201757,
+        "time_seconds": 7.595407009124756
+      },
+      {
+        "fold": 4,
+        "test_season": 2020,
+        "n_train": 12310,
+        "n_test": 951,
+        "n_features": 1,
+        "features": [
+          "temp"
+        ],
+        "confirmed": [
+          "temp"
+        ],
+        "tentative": [],
+        "rmse": 3.529451091931964,
+        "mae": 2.7216390971756383,
+        "time_seconds": 9.057398080825806
+      },
+      {
+        "fold": 5,
+        "test_season": 2021,
+        "n_train": 13261,
+        "n_test": 2467,
+        "n_features": 1,
+        "features": [
+          "temp"
+        ],
+        "confirmed": [
+          "temp"
+        ],
+        "tentative": [],
+        "rmse": 3.3544963716493816,
+        "mae": 2.6473928375383307,
+        "time_seconds": 14.180001735687256
+      },
+      {
+        "fold": 6,
+        "test_season": 2022,
+        "n_train": 15728,
+        "n_test": 2462,
+        "n_features": 2,
+        "features": [
+          "temp",
+          "tz_changes_7d_diff"
+        ],
+        "confirmed": [
+          "temp",
+          "tz_changes_7d_diff"
+        ],
+        "tentative": [],
+        "rmse": 3.321979183026637,
+        "mae": 2.6655749317885027,
+        "time_seconds": 12.386996984481812
+      },
+      {
+        "fold": 7,
+        "test_season": 2023,
+        "n_train": 18190,
+        "n_test": 2474,
+        "n_features": 2,
+        "features": [
+          "temp",
+          "tz_changes_7d_diff"
+        ],
+        "confirmed": [
+          "temp",
+          "tz_changes_7d_diff"
+        ],
+        "tentative": [],
+        "rmse": 3.495508599308909,
+        "mae": 2.7398388246036673,
+        "time_seconds": 9.556241750717163
+      },
+      {
+        "fold": 8,
+        "test_season": 2024,
+        "n_train": 20664,
+        "n_test": 2471,
+        "n_features": 1,
+        "features": [
+          "temp"
+        ],
+        "confirmed": [
+          "temp"
+        ],
+        "tentative": [],
+        "rmse": 3.228149750204598,
+        "mae": 2.583891801243608,
+        "time_seconds": 8.674614191055298
+      },
+      {
+        "fold": 9,
+        "test_season": 2025,
+        "n_train": 23135,
+        "n_test": 2476,
+        "n_features": 1,
+        "features": [
+          "temp"
+        ],
+        "confirmed": [
+          "temp"
+        ],
+        "tentative": [],
+        "rmse": 3.3204038496685593,
+        "mae": 2.6336093737543687,
+        "time_seconds": 9.522243022918701
+      }
+    ],
+    "feature_stability": {
+      "temp": {
+        "count": 9,
+        "pct": 1.0
+      },
+      "team_run_diff_10_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "tz_changes_7d_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "is_doubleheader": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "lineup_ops_weighted_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "sp_k_bb_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "sp_flyball_pct_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "is_dome": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "sp_adj_fip_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "bp_pitches_3d_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "sp_fip_x_momentum_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      }
+    }
+  },
+  "nrfi": {
+    "walkforward_overall_brier": 0.2527553753235983,
+    "walkforward_overall_logloss": 0.6988689546292594,
+    "walkforward_overall_auc": 0.5060629699754344,
+    "walkforward_base_rate": 0.49724477958236657,
+    "walkforward_naive_brier": 0.24999240876045026,
+    "walkforward_n_oof": 20688,
+    "n_samples": 25611,
+    "n_features": 5,
+    "features": [
+      "is_dome",
+      "sp_k_pct_diff",
+      "sp_xfip_diff",
+      "team_rest_days_diff",
+      "temp"
+    ]
+  },
+  "nrfi_walkforward": {
+    "fold_results": [
+      {
+        "fold": 1,
+        "test_season": 2017,
+        "n_train": 4923,
+        "n_test": 2466,
+        "n_features": 10,
+        "features": [
+          "sp_starts_diff",
+          "is_interleague",
+          "sp_rest_days_diff",
+          "sp_fip_x_momentum_diff",
+          "sp_k_pct_diff",
+          "sp_whiff_rate_vs_hand_diff",
+          "temp",
+          "batting_avg_diff",
+          "platoon_advantage_pct_diff",
+          "lineup_ops_weighted_diff"
+        ],
+        "confirmed": [],
+        "tentative": [],
+        "brier": 0.2562088072299957,
+        "logloss": 0.7063292464683542,
+        "auc": 0.5012315051428791,
+        "time_seconds": 11.366485834121704
+      },
+      {
+        "fold": 2,
+        "test_season": 2018,
+        "n_train": 7389,
+        "n_test": 2461,
+        "n_features": 10,
+        "features": [
+          "is_dome",
+          "is_interleague",
+          "temp",
+          "sp_fip_x_momentum_diff",
+          "sp_starts_diff",
+          "lineup_ops_weighted_diff",
+          "games_in_7d_diff",
+          "sp_k_bb_diff",
+          "is_doubleheader",
+          "sp_fip_diff"
+        ],
+        "confirmed": [],
+        "tentative": [],
+        "brier": 0.2556900382041931,
+        "logloss": 0.7049341416540321,
+        "auc": 0.4969687422806788,
+        "time_seconds": 7.228178977966309
+      },
+      {
+        "fold": 3,
+        "test_season": 2019,
+        "n_train": 9850,
+        "n_test": 2460,
+        "n_features": 10,
+        "features": [
+          "is_interleague",
+          "sp_k_pct_diff",
+          "team_rest_days_diff",
+          "is_dome",
+          "temp",
+          "is_doubleheader",
+          "sp_k_x_lineup_k_diff",
+          "sp_starts_diff",
+          "sp_groundball_pct_diff",
+          "sp_xfip_diff"
+        ],
+        "confirmed": [],
+        "tentative": [],
+        "brier": 0.2519730031490326,
+        "logloss": 0.6972546464957173,
+        "auc": 0.5067533562887772,
+        "time_seconds": 7.664548873901367
+      },
+      {
+        "fold": 4,
+        "test_season": 2020,
+        "n_train": 12310,
+        "n_test": 951,
+        "n_features": 10,
+        "features": [
+          "is_dome",
+          "team_rest_days_diff",
+          "temp",
+          "sp_whip_last3_diff",
+          "sp_whip_diff",
+          "sp_xfip_diff",
+          "sp_groundball_pct_diff",
+          "sp_adj_era_diff",
+          "lineup_k_rate_vs_hand_diff",
+          "team_run_diff_10_diff"
+        ],
+        "confirmed": [],
+        "tentative": [],
+        "brier": 0.252826988697052,
+        "logloss": 0.6991048230269756,
+        "auc": 0.5209798406000938,
+        "time_seconds": 8.344672203063965
+      },
+      {
+        "fold": 5,
+        "test_season": 2021,
+        "n_train": 13261,
+        "n_test": 2467,
+        "n_features": 10,
+        "features": [
+          "is_dome",
+          "temp",
+          "sp_k_pct_diff",
+          "sp_xfip_diff",
+          "wind_out_mph",
+          "lineup_k_rate_diff",
+          "team_rest_days_diff",
+          "platoon_advantage_pct_diff",
+          "sp_k_x_lineup_k_diff",
+          "lineup_xwoba_vs_sp_mix_diff"
+        ],
+        "confirmed": [],
+        "tentative": [],
+        "brier": 0.25241196155548096,
+        "logloss": 0.6981210354900816,
+        "auc": 0.5179210656738746,
+        "time_seconds": 7.772302865982056
+      },
+      {
+        "fold": 6,
+        "test_season": 2022,
+        "n_train": 15728,
+        "n_test": 2462,
+        "n_features": 1,
+        "features": [
+          "temp"
+        ],
+        "confirmed": [
+          "temp"
+        ],
+        "tentative": [],
+        "brier": 0.2512248158454895,
+        "logloss": 0.6956328659136823,
+        "auc": 0.5093299498759288,
+        "time_seconds": 11.333414077758789
+      },
+      {
+        "fold": 7,
+        "test_season": 2023,
+        "n_train": 18190,
+        "n_test": 2474,
+        "n_features": 10,
+        "features": [
+          "is_postseason",
+          "temp",
+          "sp_k_pct_last3_diff",
+          "sp_whiff_rate_diff",
+          "lineup_xwoba_vs_sp_mix_diff",
+          "sp_groundball_pct_diff",
+          "sp_xfip_diff",
+          "sp_csw_pct_diff",
+          "lineup_k_rate_diff",
+          "lineup_top_heavy_diff"
+        ],
+        "confirmed": [],
+        "tentative": [],
+        "brier": 0.2511919438838959,
+        "logloss": 0.6955985392750388,
+        "auc": 0.5150029181690499,
+        "time_seconds": 7.67308497428894
+      },
+      {
+        "fold": 8,
+        "test_season": 2024,
+        "n_train": 20664,
+        "n_test": 2471,
+        "n_features": 1,
+        "features": [
+          "temp"
+        ],
+        "confirmed": [
+          "temp"
+        ],
+        "tentative": [],
+        "brier": 0.2510107159614563,
+        "logloss": 0.695176144857428,
+        "auc": 0.49841478446988685,
+        "time_seconds": 9.70250415802002
+      },
+      {
+        "fold": 9,
+        "test_season": 2025,
+        "n_train": 23135,
+        "n_test": 2476,
+        "n_features": 10,
+        "features": [
+          "temp",
+          "is_doubleheader",
+          "is_dome",
+          "series_game_num",
+          "lineup_ops_weighted_diff",
+          "sp_xwoba_last3_diff",
+          "team_rest_days_diff",
+          "sp_k_pct_diff",
+          "sp_k_bb_diff",
+          "travel_distance_diff"
+        ],
+        "confirmed": [],
+        "tentative": [],
+        "brier": 0.2523162066936493,
+        "logloss": 0.6978397502758799,
+        "auc": 0.4916671451538815,
+        "time_seconds": 11.155064105987549
+      }
+    ],
+    "feature_stability": {
+      "temp": {
+        "count": 9,
+        "pct": 1.0
+      },
+      "is_dome": {
+        "count": 5,
+        "pct": 0.5555555555555556
+      },
+      "sp_k_pct_diff": {
+        "count": 4,
+        "pct": 0.4444444444444444
+      },
+      "team_rest_days_diff": {
+        "count": 4,
+        "pct": 0.4444444444444444
+      },
+      "sp_xfip_diff": {
+        "count": 4,
+        "pct": 0.4444444444444444
+      },
+      "sp_starts_diff": {
+        "count": 3,
+        "pct": 0.3333333333333333
+      },
+      "is_interleague": {
+        "count": 3,
+        "pct": 0.3333333333333333
+      },
+      "lineup_ops_weighted_diff": {
+        "count": 3,
+        "pct": 0.3333333333333333
+      },
+      "is_doubleheader": {
+        "count": 3,
+        "pct": 0.3333333333333333
+      },
+      "sp_groundball_pct_diff": {
+        "count": 3,
+        "pct": 0.3333333333333333
+      },
+      "sp_fip_x_momentum_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "platoon_advantage_pct_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "sp_k_bb_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "sp_k_x_lineup_k_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "lineup_k_rate_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "lineup_xwoba_vs_sp_mix_diff": {
+        "count": 2,
+        "pct": 0.2222222222222222
+      },
+      "sp_rest_days_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "sp_whiff_rate_vs_hand_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "batting_avg_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "games_in_7d_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "sp_fip_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "sp_whip_last3_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "sp_whip_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "sp_adj_era_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "lineup_k_rate_vs_hand_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "team_run_diff_10_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "wind_out_mph": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "is_postseason": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "sp_k_pct_last3_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "sp_whiff_rate_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "sp_csw_pct_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "lineup_top_heavy_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "series_game_num": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "sp_xwoba_last3_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      },
+      "travel_distance_diff": {
+        "count": 1,
+        "pct": 0.1111111111111111
+      }
+    }
+  }
+}

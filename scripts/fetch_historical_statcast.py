@@ -175,6 +175,135 @@ def aggregate_pitcher_games(df):
         else:
             row["whiff_rate"] = np.nan
 
+        # ── Tier 2: Handedness splits (xwOBA and whiff rate vs LHB/RHB) ──
+        if "stand" in pitches.columns:
+            for batter_side in ["L", "R"]:
+                side_pitches = pitches[pitches["stand"] == batter_side]
+                if len(side_pitches) < 3:
+                    row[f"xwoba_vs_{batter_side}HB"] = np.nan
+                    row[f"whiff_rate_vs_{batter_side}HB"] = np.nan
+                    continue
+
+                # xwOBA vs this batter side
+                if "estimated_woba_using_speedangle" in side_pitches.columns:
+                    xw = pd.to_numeric(
+                        side_pitches["estimated_woba_using_speedangle"], errors="coerce"
+                    ).dropna()
+                    row[f"xwoba_vs_{batter_side}HB"] = round(xw.mean(), 3) if len(xw) > 0 else np.nan
+                else:
+                    row[f"xwoba_vs_{batter_side}HB"] = np.nan
+
+                # Whiff rate vs this batter side
+                if "description" in side_pitches.columns:
+                    s_desc = side_pitches["description"].fillna("")
+                    s_swings = s_desc.isin([
+                        "swinging_strike", "swinging_strike_blocked",
+                        "foul", "foul_tip", "foul_bunt",
+                        "hit_into_play", "hit_into_play_no_out", "hit_into_play_score",
+                        "missed_bunt",
+                    ])
+                    s_whiffs = s_desc.isin(["swinging_strike", "swinging_strike_blocked"])
+                    s_n_sw = s_swings.sum()
+                    row[f"whiff_rate_vs_{batter_side}HB"] = (
+                        round(s_whiffs.sum() / s_n_sw * 100, 1) if s_n_sw > 0 else np.nan
+                    )
+                else:
+                    row[f"whiff_rate_vs_{batter_side}HB"] = np.nan
+        else:
+            for batter_side in ["L", "R"]:
+                row[f"xwoba_vs_{batter_side}HB"] = np.nan
+                row[f"whiff_rate_vs_{batter_side}HB"] = np.nan
+
+        # ── Tier 3: Pitch-type distribution ──
+        if "pitch_type" in pitches.columns:
+            pt = pitches["pitch_type"].dropna()
+            n_typed = len(pt)
+            if n_typed >= 5:
+                fastball_types = {"FF", "SI", "FC"}
+                breaking_types = {"SL", "CU", "ST", "KC", "SV"}
+                offspeed_types = {"CH", "FS"}
+
+                row["fastball_pct"] = round(pt.isin(fastball_types).sum() / n_typed * 100, 1)
+                row["breaking_pct"] = round(pt.isin(breaking_types).sum() / n_typed * 100, 1)
+                row["offspeed_pct"] = round(pt.isin(offspeed_types).sum() / n_typed * 100, 1)
+
+                type_counts = pt.value_counts()
+                row["primary_pitch_pct"] = round(type_counts.iloc[0] / n_typed * 100, 1)
+
+                probs = type_counts.values / n_typed
+                row["pitch_mix_entropy"] = round(-np.sum(probs * np.log2(probs + 1e-10)), 3)
+            else:
+                for c in ["fastball_pct", "breaking_pct", "offspeed_pct",
+                           "primary_pitch_pct", "pitch_mix_entropy"]:
+                    row[c] = np.nan
+        else:
+            for c in ["fastball_pct", "breaking_pct", "offspeed_pct",
+                       "primary_pitch_pct", "pitch_mix_entropy"]:
+                row[c] = np.nan
+
+        # ── Velocity & Command metrics ──
+        # Avg fastball velocity (FF + SI + FC)
+        if "pitch_type" in pitches.columns and "release_speed" in pitches.columns:
+            fb_mask = pitches["pitch_type"].isin({"FF", "SI", "FC"})
+            fb_velo = pd.to_numeric(
+                pitches.loc[fb_mask, "release_speed"], errors="coerce"
+            ).dropna()
+            if len(fb_velo) >= 3:
+                row["avg_fastball_velo"] = round(fb_velo.mean(), 1)
+            else:
+                row["avg_fastball_velo"] = np.nan
+            # 95th percentile fastball velo (arm health / effort)
+            if len(fb_velo) >= 10:
+                row["max_fastball_velo"] = round(fb_velo.quantile(0.95), 1)
+            else:
+                row["max_fastball_velo"] = np.nan
+        else:
+            row["avg_fastball_velo"] = np.nan
+            row["max_fastball_velo"] = np.nan
+
+        # Zone % (pitches in strike zone / total pitches)
+        if "zone" in pitches.columns:
+            zone_vals = pd.to_numeric(pitches["zone"], errors="coerce").dropna()
+            if len(zone_vals) >= 10:
+                in_zone = zone_vals.between(1, 9).sum()
+                row["zone_pct"] = round(in_zone / len(zone_vals) * 100, 1)
+            else:
+                row["zone_pct"] = np.nan
+        else:
+            row["zone_pct"] = np.nan
+
+        # CSW% (called strikes + whiffs / total pitches)
+        if "description" in pitches.columns:
+            desc = pitches["description"].fillna("")
+            csw_events = desc.isin([
+                "called_strike", "swinging_strike", "swinging_strike_blocked",
+            ])
+            if n_pitches >= 10:
+                row["csw_pct"] = round(csw_events.sum() / n_pitches * 100, 1)
+            else:
+                row["csw_pct"] = np.nan
+        else:
+            row["csw_pct"] = np.nan
+
+        # Chase rate (swing rate on pitches outside the zone)
+        if "zone" in pitches.columns and "description" in pitches.columns:
+            zone_vals = pd.to_numeric(pitches["zone"], errors="coerce")
+            outside_mask = zone_vals.between(11, 14) | (zone_vals > 9)
+            outside_pitches = pitches[outside_mask]
+            if len(outside_pitches) >= 10:
+                o_desc = outside_pitches["description"].fillna("")
+                o_swings = o_desc.isin([
+                    "swinging_strike", "swinging_strike_blocked",
+                    "foul", "foul_tip", "foul_bunt",
+                    "hit_into_play", "hit_into_play_no_out", "hit_into_play_score",
+                    "missed_bunt",
+                ])
+                row["chase_rate"] = round(o_swings.sum() / len(outside_pitches) * 100, 1)
+            else:
+                row["chase_rate"] = np.nan
+        else:
+            row["chase_rate"] = np.nan
+
         rows.append(row)
 
     return pd.DataFrame(rows)
@@ -243,12 +372,31 @@ def main():
         log.info(f"  Unique games: {df_out['game_pk'].nunique()}")
         log.info(f"  Date range: {df_out['date'].min()} to {df_out['date'].max()}")
         for col in ["xwoba", "hard_hit_pct", "barrel_pct", "groundball_pct",
-                     "flyball_pct", "whiff_rate"]:
-            pct = df_out[col].notna().mean() * 100
-            log.info(f"  {col}: {pct:.0f}% populated")
+                     "flyball_pct", "whiff_rate",
+                     "xwoba_vs_LHB", "xwoba_vs_RHB",
+                     "whiff_rate_vs_LHB", "whiff_rate_vs_RHB",
+                     "fastball_pct", "breaking_pct", "offspeed_pct",
+                     "primary_pitch_pct", "pitch_mix_entropy",
+                     "avg_fastball_velo", "max_fastball_velo",
+                     "zone_pct", "csw_pct", "chase_rate"]:
+            if col in df_out.columns:
+                pct = df_out[col].notna().mean() * 100
+                log.info(f"  {col}: {pct:.0f}% populated")
     else:
         log.warning("No Statcast data fetched")
 
 
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--reaggregate", action="store_true",
+                        help="Clear progress and re-aggregate from pybaseball cache")
+    args = parser.parse_args()
+    if args.reaggregate:
+        if PROGRESS_FILE.exists():
+            PROGRESS_FILE.unlink()
+            log.info("Cleared progress file — will re-aggregate all months")
+        if OUTPUT_FILE.exists():
+            OUTPUT_FILE.unlink()
+            log.info("Cleared output file")
     main()

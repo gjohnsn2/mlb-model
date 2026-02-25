@@ -1,0 +1,166 @@
+MLB SEGMENTED BACKTEST REPORT (No-Market Model)
+================================================================================
+Generated: 2026-02-24 17:34
+Production threshold: 0.5 runs
+Bonferroni p-value: 0.001 (~50 tests)
+Min bets to report: 50
+Min bets for threshold search: 100
+Total OOF games with H2H odds: 17984
+
+OVERALL BASELINE (>= 0.5 runs):
+  Bets: 12353, W-L: 5465-6888, Win%: 44.2%, ROI: -2.1%, Dog%: 73%, p: 0.9564
+
+================================================================================
+SEGMENT: Market Closeness (|prob - 0.5|)
+================================================================================
+  Bin                       |  Games |  Bets |        W-L |   Win% |     ROI |  Dog% |   p-val |   Best*
+  -----------------------------------------------------------------------------------------------
+  Clear fav (10-15%)        |   3926 |  2877 |  1248-1629 |  43.4% |   -1.3% |   80% |  0.7109 |   +0.4%
+  Lean (5-10%)              |   5254 |  3527 |  1639-1888 |  46.5% |   -3.8% |   72% |  0.9748 |   -3.0%
+  Strong fav (15%+)         |   3102 |  2505 |   851-1654 |  34.0% |   -1.1% |   89% |  0.6316 |   +5.9%
+  Toss-up (<5%)             |   5702 |  3444 |  1727-1717 |  50.1% |   -2.0% |   57% |  0.8615 |   -1.3%
+
+  * p < 0.05 (nominal)   *** p < 0.001 (Bonferroni-significant)
+  Best* = best in-sample threshold ROI (DO NOT use for decisions)
+
+================================================================================
+SEGMENT: SP Quality Gap (|sp_season_ip_diff|)
+================================================================================
+  Bin                       |  Games |  Bets |        W-L |   Win% |     ROI |  Dog% |   p-val |   Best*
+  -----------------------------------------------------------------------------------------------
+  Q1 (small)                |   4440 |  2975 |  1314-1661 |  44.2% |   -1.7% |   75% |  0.7499 |   +2.5%
+  Q2                        |   4195 |  2885 |  1307-1578 |  45.3% |   -1.2% |   72% |  0.6742 |   +1.5%
+  Q3                        |   4330 |  2938 |  1314-1624 |  44.7% |   -0.7% |   71% |  0.6116 |   +5.2%
+  Q4 (large)                |   4303 |  3059 |  1334-1725 |  43.6% |   -4.6% |   71% |  0.9718 |   -3.5%
+
+  * p < 0.05 (nominal)   *** p < 0.001 (Bonferroni-significant)
+  Best* = best in-sample threshold ROI (DO NOT use for decisions)
+
+================================================================================
+SEGMENT: Season Phase (month)
+================================================================================
+  Bin                       |  Games |  Bets |        W-L |   Win% |     ROI |  Dog% |   p-val |   Best*
+  -----------------------------------------------------------------------------------------------
+  Jul-Aug                   |   6009 |  4118 |  1810-2308 |  44.0% |   -2.4% |   74% |  0.8623 |   +2.4%
+  Mar-Apr                   |   2789 |  1862 |   801-1061 |  43.0% |   -2.4% |   79% |  0.7712 |   +2.8%
+  May-Jun                   |   5643 |  3843 |  1778-2065 |  46.3% |   +0.7% |   71% |  0.3775 |   +4.4%
+  Sep+                      |   3543 |  2530 |  1076-1454 |  42.5% |   -5.5% |   71% |  0.9795 |   -3.3%
+
+  * p < 0.05 (nominal)   *** p < 0.001 (Bonferroni-significant)
+  Best* = best in-sample threshold ROI (DO NOT use for decisions)
+
+================================================================================
+SEGMENT: Model Confidence (|prediction|)
+================================================================================
+  Bin                       |  Games |  Bets |        W-L |   Win% |     ROI |  Dog% |   p-val |   Best*
+  -----------------------------------------------------------------------------------------------
+  Q1 (low)                  |   4496 |  2914 |  1144-1770 |  39.3% |   -0.8% |  100% |  0.6072 |  +17.6%
+  Q2                        |   4496 |  2918 |  1203-1715 |  41.2% |   +1.0% |   93% |  0.3627 |  +13.6%
+  Q3                        |   4496 |  3010 |  1278-1732 |  42.5% |   -4.1% |   73% |  0.9441 |   -2.5%
+  Q4 (high)                 |   4496 |  3511 |  1840-1671 |  52.4% |   -3.6% |   34% |  0.9694 |   -3.6%
+
+  * p < 0.05 (nominal)   *** p < 0.001 (Bonferroni-significant)
+  Best* = best in-sample threshold ROI (DO NOT use for decisions)
+
+================================================================================
+SEGMENT: Feature Agreement (margin features)
+================================================================================
+  Bin                       |  Games |  Bets |        W-L |   Win% |     ROI |  Dog% |   p-val |   Best*
+  -----------------------------------------------------------------------------------------------
+  Mixed (<=5/8)             |   4364 |  2997 |  1343-1654 |  44.8% |   -0.4% |   76% |  0.5647 |   +3.0%
+  Moderate (6/8)            |   5923 |  4020 |  1759-2261 |  43.8% |   -1.8% |   77% |  0.7916 |   +2.0%
+  Strong (7-8/8)            |   7697 |  5336 |  2363-2973 |  44.3% |   -3.3% |   68% |  0.9617 |   +0.7%
+
+  * p < 0.05 (nominal)   *** p < 0.001 (Bonferroni-significant)
+  Best* = best in-sample threshold ROI (DO NOT use for decisions)
+
+================================================================================
+CROSS-SEGMENT: Market Closeness x Model Confidence
+================================================================================
+  Combination                                   |  Games |  Bets |   Win% |     ROI |   p-val
+  ------------------------------------------------------------------------------------------
+  Strong fav (15%+) x Q1 (low)                  |    526 |   526 |  29.3% |   +4.0% |  0.2943
+  Clear fav (10-15%) x Q2                       |    938 |   818 |  39.9% |   +3.4% |  0.2380
+  Toss-up (<5%) x Q2                            |   1555 |   725 |  51.9% |   +3.2% |  0.1982
+  Strong fav (15%+) x Q2                        |    595 |   595 |  29.2% |   +1.9% |  0.3964
+  Toss-up (<5%) x Q3                            |   1429 |  1231 |  51.8% |   +1.8% |  0.2679
+  Clear fav (10-15%) x Q4 (high)                |   1100 |   724 |  59.0% |   -1.5% |  0.6395
+  Strong fav (15%+) x Q4 (high)                 |   1191 |   665 |  48.1% |   -1.7% |  0.6135
+  Lean (5-10%) x Q1 (low)                       |   1402 |  1050 |  42.9% |   -2.6% |  0.7639
+  Clear fav (10-15%) x Q1 (low)                 |    922 |   922 |  37.7% |   -2.6% |  0.7267
+  Lean (5-10%) x Q4 (high)                      |   1133 |  1050 |  54.5% |   -3.2% |  0.8365
+  Toss-up (<5%) x Q1 (low)                      |   1646 |   416 |  46.2% |   -4.5% |  0.8127
+  Lean (5-10%) x Q2                             |   1408 |   780 |  41.9% |   -4.6% |  0.8646
+  Lean (5-10%) x Q3                             |   1311 |   647 |  44.8% |   -5.4% |  0.8751
+  Toss-up (<5%) x Q4 (high)                     |   1072 |  1072 |  48.6% |   -5.9% |  0.9724
+  Clear fav (10-15%) x Q3                       |    966 |   413 |  35.6% |   -6.2% |  0.8185
+  Strong fav (15%+) x Q3                        |    790 |   719 |  28.2% |   -8.9% |  0.9137
+
+  * p < 0.05 (nominal)   *** p < 0.001 (Bonferroni-significant)
+
+================================================================================
+CROSS-SEGMENT: SP Quality Gap x Season Phase
+================================================================================
+  Combination                                   |  Games |  Bets |   Win% |     ROI |   p-val
+  ------------------------------------------------------------------------------------------
+  Q2 x Mar-Apr                                  |    618 |   419 |  47.5% |   +6.1% |  0.1831
+  Q3 x Mar-Apr                                  |     91 |    55 |  40.0% |   +4.5% |  0.4247
+  Q3 x May-Jun                                  |   1669 |  1126 |  47.8% |   +4.0% |  0.1546
+  Q1 (small) x Jul-Aug                          |    819 |   535 |  45.8% |   +3.8% |  0.2754
+  Q1 (small) x May-Jun                          |   1347 |   904 |  46.9% |   +1.6% |  0.3552
+  Q2 x Jul-Aug                                  |   1206 |   829 |  44.8% |   -0.7% |  0.5568
+  Q3 x Jul-Aug                                  |   1657 |  1125 |  43.6% |   -1.9% |  0.6830
+  Q2 x May-Jun                                  |   1792 |  1237 |  45.5% |   -2.5% |  0.7481
+  Q4 (large) x Sep+                             |   1606 |  1177 |  43.9% |   -2.8% |  0.7644
+  Q1 (small) x Mar-Apr                          |   1965 |  1315 |  42.3% |   -4.7% |  0.8945
+  Q4 (large) x May-Jun                          |    607 |   422 |  43.4% |   -5.4% |  0.7859
+  Q2 x Sep+                                     |    579 |   400 |  43.5% |   -5.8% |  0.7911
+  Q4 (large) x Jul-Aug                          |   2090 |  1460 |  43.4% |   -5.9% |  0.9547
+  Q3 x Sep+                                     |    913 |   632 |  41.8% |   -7.0% |  0.9128
+  Q1 (small) x Sep+                             |    309 |   221 |  40.3% |  -10.8% |  0.8542
+  Q4 (large) x Mar-Apr                          |      0 | < 50 games
+
+  * p < 0.05 (nominal)   *** p < 0.001 (Bonferroni-significant)
+
+================================================================================
+INTEGRITY CHECKS
+================================================================================
+  Market Closeness (|prob - 0.5|): 17984 games across bins (expected ~17984), 12353 bets at prod threshold
+  SP Quality Gap (|sp_season_ip_diff|): 17268 games across bins (expected ~17984), 11857 bets at prod threshold
+  Season Phase (month): 17984 games across bins (expected ~17984), 12353 bets at prod threshold
+  Model Confidence (|prediction|): 17984 games across bins (expected ~17984), 12353 bets at prod threshold
+  Feature Agreement (margin features): 17984 games across bins (expected ~17984), 12353 bets at prod threshold
+  Overall: 12353 bets at prod threshold
+
+================================================================================
+SUMMARY OF FINDINGS
+================================================================================
+Segments with positive ROI at 0.5-run threshold:
+
+  SP Quality Gap x Season Phase / Q2 x Mar-Apr: ROI +6.1%, 419 bets, p=0.1831 (not sig)
+  SP Quality Gap x Season Phase / Q3 x Mar-Apr: ROI +4.5%, 55 bets, p=0.4247 (not sig)
+  Market Closeness x Model Confidence / Strong fav (15%+) x Q1 (low): ROI +4.0%, 526 bets, p=0.2943 (not sig)
+  SP Quality Gap x Season Phase / Q3 x May-Jun: ROI +4.0%, 1126 bets, p=0.1546 (not sig)
+  SP Quality Gap x Season Phase / Q1 (small) x Jul-Aug: ROI +3.8%, 535 bets, p=0.2754 (not sig)
+  Market Closeness x Model Confidence / Clear fav (10-15%) x Q2: ROI +3.4%, 818 bets, p=0.2380 (not sig)
+  Market Closeness x Model Confidence / Toss-up (<5%) x Q2: ROI +3.2%, 725 bets, p=0.1982 (not sig)
+  Market Closeness x Model Confidence / Strong fav (15%+) x Q2: ROI +1.9%, 595 bets, p=0.3964 (not sig)
+  Market Closeness x Model Confidence / Toss-up (<5%) x Q3: ROI +1.8%, 1231 bets, p=0.2679 (not sig)
+  SP Quality Gap x Season Phase / Q1 (small) x May-Jun: ROI +1.6%, 904 bets, p=0.3552 (not sig)
+  Model Confidence (|prediction|) / Q2: ROI +1.0%, 2918 bets, p=0.3627 (not sig)
+  Season Phase (month) / May-Jun: ROI +0.7%, 3843 bets, p=0.3775 (not sig)
+
+  Bonferroni-significant (p < 0.001): 0
+  Nominally significant (p < 0.05): 0
+  Expected by chance (~50 tests): ~2-3 at p<0.05, ~0 at Bonferroni
+
+================================================================================
+NOTES
+================================================================================
+- All predictions are truly out-of-sample (walk-forward, per-fold Boruta)
+- Calibration is GLOBAL — no per-segment recalibration (that would be leakage)
+- 'Best*' threshold ROI is IN-SAMPLE — do not use for trading decisions
+- Bonferroni threshold: p < 0.001 for ~50 segment tests
+- Feature agreement uses sign of each _diff feature to count home/away support
+- For sp_xfip_diff: negative = home SP better (inverted convention)
+- Market closeness = |market_home_prob - 0.5| from de-vigged consensus H2H

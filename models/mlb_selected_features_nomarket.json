@@ -1,0 +1,35 @@
+{
+  "margin_features": [
+    "lineup_bb_k_ratio_diff",
+    "lineup_ops_vs_hand_diff",
+    "sp_k_bb_diff",
+    "sp_k_pct_diff",
+    "sp_season_ip_diff",
+    "sp_whiff_x_lineup_ops_diff",
+    "sp_xfip_diff",
+    "team_run_diff_10_diff"
+  ],
+  "total_features": [
+    "temp"
+  ],
+  "f5_margin_features": [
+    "is_doubleheader",
+    "sp_csw_pct_diff",
+    "sp_k_bb_diff",
+    "sp_k_pct_diff",
+    "sp_season_ip_diff",
+    "sp_whiff_x_lineup_ops_diff",
+    "sp_xfip_diff",
+    "team_run_diff_10_diff"
+  ],
+  "f5_total_features": [
+    "temp"
+  ],
+  "nrfi_features": [
+    "is_dome",
+    "sp_k_pct_diff",
+    "sp_xfip_diff",
+    "team_rest_days_diff",
+    "temp"
+  ]
+}

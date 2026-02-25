@@ -31,6 +31,7 @@ Run: python3 10_backtest_mlb.py
 """
 
 import sys
+import argparse
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -84,10 +85,10 @@ def american_to_decimal(odds):
         return 1 + odds / 100
 
 
-def load_oof_predictions():
+def load_oof_predictions(suffix=""):
     """Load walk-forward OOF predictions for margin and total."""
-    margin_path = MODELS_DIR / "mlb_oof_margin_predictions.csv"
-    total_path = MODELS_DIR / "mlb_oof_total_predictions.csv"
+    margin_path = MODELS_DIR / f"mlb_oof_margin{suffix}_predictions.csv"
+    total_path = MODELS_DIR / f"mlb_oof_total{suffix}_predictions.csv"
 
     margin_oof = None
     total_oof = None
@@ -633,12 +634,23 @@ def build_report(ml_results, total_results, margin_calibrated, total_matched,
 
 
 def main():
+    parser = argparse.ArgumentParser(description="MLB profitability backtest")
+    mode_group = parser.add_mutually_exclusive_group()
+    mode_group.add_argument("--no-market", action="store_true",
+                            help="Use no-market OOF predictions")
+    mode_group.add_argument("--ensemble", action="store_true",
+                            help="Use ensemble OOF predictions")
+    args = parser.parse_args()
+
+    suffix = "_nomarket" if args.no_market else ("_ensemble" if args.ensemble else "")
+    mode_label = "NO-MARKET" if args.no_market else ("ENSEMBLE" if args.ensemble else "standard")
+
     log.info("=" * 60)
-    log.info("MLB PROFITABILITY BACKTEST (calibrated edges)")
+    log.info(f"MLB PROFITABILITY BACKTEST [{mode_label}] (calibrated edges)")
     log.info("=" * 60)
 
     # Load data
-    margin_oof, total_oof = load_oof_predictions()
+    margin_oof, total_oof = load_oof_predictions(suffix)
     training_df = load_training_data_for_odds()
 
     if margin_oof is None and total_oof is None:
@@ -721,7 +733,7 @@ def main():
                           margin_rmse, ml_bets_prod, total_bets_prod,
                           null_stats)
 
-    report_path = MODELS_DIR / "mlb_backtest_report.txt"
+    report_path = MODELS_DIR / f"mlb_backtest_report{suffix}.txt"
     with open(report_path, "w") as f:
         f.write(report)
     log.info(f"\nSaved backtest report -> {report_path}")
@@ -735,7 +747,7 @@ def main():
 
     if all_bets:
         results_df = pd.concat(all_bets, ignore_index=True)
-        results_path = MODELS_DIR / "mlb_backtest_results.csv"
+        results_path = MODELS_DIR / f"mlb_backtest_results{suffix}.csv"
         results_df.to_csv(results_path, index=False)
         log.info(f"Saved {len(results_df)} bet details -> {results_path}")
 

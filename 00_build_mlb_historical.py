@@ -76,12 +76,21 @@ def compute_sp_features(games_df, sp_computer):
     sp_feature_cols = [
         "sp_starts", "sp_era", "sp_whip", "sp_fip", "sp_xfip",
         "sp_k_per_9", "sp_bb_per_9", "sp_hr_per_9", "sp_k_pct", "sp_bb_pct",
+        "sp_k_bb",  # K-BB% (unlock — already computed in feature_engine)
         "sp_avg_ip", "sp_avg_pitches",
         "sp_xwoba", "sp_hard_hit_pct", "sp_barrel_pct",
         "sp_groundball_pct", "sp_flyball_pct", "sp_whiff_rate",
+        # Velocity & command (from Statcast)
+        "sp_fastball_velo", "sp_max_velo", "sp_zone_pct", "sp_csw_pct", "sp_chase_rate",
         "sp_era_last3", "sp_whip_last3", "sp_fip_last3", "sp_k_pct_last3",
         "sp_xwoba_last3", "sp_hard_hit_pct_last3", "sp_barrel_pct_last3",
         "sp_groundball_pct_last3", "sp_flyball_pct_last3", "sp_whiff_rate_last3",
+        # Handedness splits (Tier 2 — SP side)
+        "sp_xwoba_vs_LHB", "sp_xwoba_vs_RHB",
+        "sp_whiff_rate_vs_LHB", "sp_whiff_rate_vs_RHB",
+        # Pitch-type distribution (Tier 3)
+        "sp_fastball_pct", "sp_breaking_pct", "sp_offspeed_pct",
+        "sp_primary_pitch_pct", "sp_pitch_mix_entropy",
     ]
 
     home_rows = []
@@ -130,8 +139,12 @@ def compute_sp_features(games_df, sp_computer):
 
     # Coverage report
     for col in sp_feature_cols[:6]:
-        h_pct = home_sp_df[f"home_{col}"].notna().mean() * 100
-        log.info(f"  home_{col}: {h_pct:.0f}% populated")
+        h_key = f"home_{col}"
+        if h_key in home_sp_df.columns:
+            h_pct = home_sp_df[h_key].notna().mean() * 100
+            log.info(f"  home_{col}: {h_pct:.0f}% populated")
+        else:
+            log.warning(f"  home_{col}: NOT in DataFrame (check get_pitcher_stats)")
 
     return result
 
@@ -590,6 +603,80 @@ def compute_momentum_features(games_df):
             log.info(f"  {col}: {pct:.0f}% populated")
 
     return mom_df
+
+
+def compute_league_hfa_features(games_df):
+    """
+    Compute rolling league-wide home-field advantage features.
+
+    The league-wide HFA fluctuates year-to-year (e.g., 52% in 2023-2024 vs
+    54.4% in 2025). Without this feature, models trained on declining-HFA
+    data systematically mis-calibrate when HFA bounces back.
+
+    Features:
+      league_home_win_pct_30  — Rolling 30-day league-wide home win %
+      league_home_win_pct_90  — Rolling 90-day league-wide home win %
+      league_home_margin_30   — Rolling 30-day mean home margin (runs)
+
+    All use strictly pre-game data (games before the current date).
+    """
+    WINDOWS = [30, 90]
+    MIN_GAMES = 15
+
+    df = games_df.copy()
+    df["date"] = pd.to_datetime(df["date"])
+    df["home_runs_n"] = pd.to_numeric(df["home_runs"], errors="coerce")
+    df["away_runs_n"] = pd.to_numeric(df["away_runs"], errors="coerce")
+
+    # Build chronological league game history: (date_ordinal, home_won, margin)
+    valid = df[df["home_runs_n"].notna() & df["away_runs_n"].notna()].copy()
+    valid = valid.sort_values("date")
+    league_history = []
+    for _, game in valid.iterrows():
+        hr, ar = game["home_runs_n"], game["away_runs_n"]
+        league_history.append((
+            game["date"].toordinal(),
+            1.0 if hr > ar else 0.0,
+            hr - ar,
+        ))
+
+    # Convert to numpy for fast windowed lookups
+    hist_dates = np.array([h[0] for h in league_history])
+    hist_home_won = np.array([h[1] for h in league_history])
+    hist_margin = np.array([h[2] for h in league_history])
+
+    rows = []
+    n_total = len(df)
+
+    for i, (_, game) in enumerate(df.iterrows()):
+        row = {}
+        game_ord = game["date"].toordinal() if pd.notna(game["date"]) else 0
+
+        # All league games strictly before this game's date
+        prior_mask = hist_dates < game_ord
+
+        for window in WINDOWS:
+            # Games within the window (date range)
+            window_mask = prior_mask & (hist_dates >= game_ord - window)
+            n_games = window_mask.sum()
+
+            if n_games >= MIN_GAMES:
+                row[f"league_home_win_pct_{window}"] = hist_home_won[window_mask].mean()
+                if window == 30:
+                    row["league_home_margin_30"] = hist_margin[window_mask].mean()
+
+        rows.append(row)
+
+        if (i + 1) % 5000 == 0:
+            log.info(f"  League HFA features: [{i+1}/{n_total}] ({(i+1)/n_total*100:.0f}%)")
+
+    hfa_df = pd.DataFrame(rows, index=df.index)
+
+    for col in hfa_df.columns:
+        pct = hfa_df[col].notna().mean() * 100
+        log.info(f"  {col}: {pct:.0f}% populated")
+
+    return hfa_df
 
 
 # ── Bullpen Features (Rolling ERA, WHIP, Usage) ──────────────
@@ -1245,6 +1332,9 @@ def compute_lineup_features(games_df, batter_df, handedness_df, pitcher_logs):
             obp_list = []
             streak_list = []
             platoon_count = 0
+            # New accumulators for Round 2 features
+            ops_weighted_list = []  # (ops, weight) tuples
+            bb_k_ratio_list = []
 
             # Get opposing SP handedness
             opp_sp_hand = "R"
@@ -1278,11 +1368,21 @@ def compute_lineup_features(games_df, batter_df, handedness_df, pitcher_logs):
                         ops_list.append(ops_val)
                         obp_list.append(obp_val)
 
+                        # Batting-order weighted OPS: 1-4 at 1.29x, 5-6 at 1.14x, 7-9 at 1.0x
+                        pa_weight = 1.29 if order_idx < 4 else (1.14 if order_idx < 6 else 1.0)
+                        ops_weighted_list.append((ops_val, pa_weight))
+
                     if total_pa > 0:
                         k_rate = total_k / total_pa
                         # Weight top 4 batters 1.5x
                         weight = 1.5 if order_idx < 4 else 1.0
                         k_rate_list.append((k_rate, weight))
+
+                        # BB/K ratio (plate discipline)
+                        if total_k > 0:
+                            bb_k_ratio_list.append(total_bb / total_k)
+                        else:
+                            bb_k_ratio_list.append(total_bb / 1.0)  # Cap at bb count
 
                     # Streak: last 5 games OPS minus season OPS
                     if len(prior) >= ROLLING_WINDOW:
@@ -1337,6 +1437,22 @@ def compute_lineup_features(games_df, batter_df, handedness_df, pitcher_logs):
             if streak_list:
                 row[f"{side}_lineup_hot_streak"] = np.mean(streak_list)
 
+            # Batting-order weighted OPS
+            if ops_weighted_list:
+                total_w = sum(w for _, w in ops_weighted_list)
+                row[f"{side}_lineup_ops_weighted"] = sum(o * w for o, w in ops_weighted_list) / total_w
+
+            # Top-heavy: top-4 OPS minus bottom-5 OPS (lineup balance)
+            if len(ops_list) >= 7:
+                top4 = [ops_weighted_list[j][0] for j in range(min(4, len(ops_weighted_list)))]
+                bot5 = [ops_weighted_list[j][0] for j in range(4, len(ops_weighted_list))]
+                if top4 and bot5:
+                    row[f"{side}_lineup_top_heavy"] = np.mean(top4) - np.mean(bot5)
+
+            # BB/K ratio (plate discipline)
+            if bb_k_ratio_list:
+                row[f"{side}_lineup_bb_k_ratio"] = np.mean(bb_k_ratio_list)
+
             row[f"{side}_platoon_advantage_pct"] = platoon_count / n_batters if n_batters > 0 else 0
 
             # Star missing: identify top 3 by season OPS, check if in today's lineup
@@ -1377,7 +1493,8 @@ def compute_lineup_features(games_df, batter_df, handedness_df, pitcher_logs):
     # Compute diffs
     for feat in ["lineup_ops", "lineup_power", "lineup_k_rate", "lineup_obp",
                   "lineup_hot_streak", "platoon_advantage_pct",
-                  "star_missing_ops", "lineup_continuity"]:
+                  "star_missing_ops", "lineup_continuity",
+                  "lineup_ops_weighted", "lineup_top_heavy", "lineup_bb_k_ratio"]:
         h_col = f"home_{feat}"
         a_col = f"away_{feat}"
         if h_col in lineup_df.columns and a_col in lineup_df.columns:
@@ -1385,7 +1502,8 @@ def compute_lineup_features(games_df, batter_df, handedness_df, pitcher_logs):
 
     for col in ["lineup_ops_diff", "lineup_power_diff", "lineup_k_rate_diff",
                 "platoon_advantage_pct_diff", "star_missing_ops_diff",
-                "lineup_continuity_diff", "lineup_hot_streak_diff", "lineup_obp_diff"]:
+                "lineup_continuity_diff", "lineup_hot_streak_diff", "lineup_obp_diff",
+                "lineup_ops_weighted_diff", "lineup_top_heavy_diff", "lineup_bb_k_ratio_diff"]:
         if col in lineup_df.columns:
             pct = lineup_df[col].notna().mean() * 100
             log.info(f"  {col}: {pct:.0f}% populated")
@@ -1393,6 +1511,736 @@ def compute_lineup_features(games_df, batter_df, handedness_df, pitcher_logs):
             log.warning(f"  {col}: not computed (no data)")
 
     return lineup_df
+
+
+# ── Opponent Lookup ──────────────────────────────────────────────
+def build_game_opponent_lookup(games_df):
+    """
+    Build lookup: (game_pk, team_id) -> {opp_team_id, opp_sp_id}.
+
+    Used by Tiers 1-3 to find who a team/pitcher faced in any game.
+    """
+    lookup = {}
+    for _, game in games_df.iterrows():
+        gpk = game["game_pk"]
+        h_tid = game.get("home_team_id")
+        a_tid = game.get("away_team_id")
+        h_sp = game.get("home_sp_id")
+        a_sp = game.get("away_sp_id")
+
+        if pd.notna(h_tid):
+            lookup[(gpk, int(h_tid))] = {
+                "opp_team_id": int(a_tid) if pd.notna(a_tid) else None,
+                "opp_sp_id": int(a_sp) if pd.notna(a_sp) else None,
+            }
+        if pd.notna(a_tid):
+            lookup[(gpk, int(a_tid))] = {
+                "opp_team_id": int(h_tid) if pd.notna(h_tid) else None,
+                "opp_sp_id": int(h_sp) if pd.notna(h_sp) else None,
+            }
+
+    log.info(f"  Opponent lookup: {len(lookup)} entries")
+    return lookup
+
+
+# ── Tier 1: Opponent-Adjusted Features ──────────────────────────
+def compute_opponent_adjusted_features(games_df, pitcher_logs, batting_logs, opp_lookup):
+    """
+    Compute ERA+/FIP+ style opponent-adjusted stats.
+
+    For SPs: ERA adjusted by strength of opposing lineups faced.
+      sp_adj_era = raw_era * (league_avg_opp_OPS / sp_avg_opp_OPS)
+      If SP faced tougher lineups, their adjusted ERA goes down.
+
+    For batting: OPS adjusted by strength of opposing SPs faced.
+      batting_adj_ops = raw_ops * (league_avg_opp_ERA / team_avg_opp_ERA)
+      If team faced tougher pitchers, their adjusted OPS goes up.
+
+    Features:
+      sp_adj_era_diff, sp_adj_fip_diff, batting_adj_ops_diff, batting_adj_k_rate_diff
+    """
+    from bisect import bisect_left
+
+    BATTING_WINDOW = 10
+
+    df = games_df.copy()
+    df["date"] = pd.to_datetime(df["date"])
+
+    # ── Step 1: Pre-compute per-team rolling OPS at each game date ──
+    batting = batting_logs.copy()
+    batting["date"] = pd.to_datetime(batting["date"])
+    for col in ["at_bats", "hits", "doubles", "home_runs", "walks", "strikeouts"]:
+        if col in batting.columns:
+            batting[col] = pd.to_numeric(batting[col], errors="coerce")
+
+    batting = batting.sort_values(["team_id", "date"]).reset_index(drop=True)
+
+    # Build per-team: sorted list of (date_ordinal, rolling_ops, rolling_k_rate)
+    team_ops_history = {}  # team_id -> [(date_ord, ops, k_rate)]
+    for tid, group in batting.groupby("team_id"):
+        entries = []
+        for i in range(len(group)):
+            window = group.iloc[max(0, i - BATTING_WINDOW + 1):i + 1]
+            total_ab = window["at_bats"].sum()
+            total_h = window["hits"].sum()
+            total_bb = window["walks"].sum()
+            total_k = window["strikeouts"].sum()
+            total_2b = window["doubles"].sum() if "doubles" in window.columns else 0
+            total_hr = window["home_runs"].sum()
+            total_pa = total_ab + total_bb
+
+            if total_ab > 0 and total_pa > 0:
+                avg = total_h / total_ab
+                slg = (total_h - total_2b - total_hr + 2 * total_2b + 4 * total_hr) / total_ab
+                obp = (total_h + total_bb) / total_pa
+                ops = obp + slg
+                k_rate = total_k / total_pa
+                entries.append((group.iloc[i]["date"].toordinal(), ops, k_rate))
+
+        team_ops_history[tid] = entries
+
+    # ── Step 2: Pre-compute per-SP season-to-date ERA/FIP at each game ──
+    pl = pitcher_logs.copy()
+    pl["date"] = pd.to_datetime(pl["date"])
+    for col in ["ip", "earned_runs", "hits", "walks", "home_runs", "strikeouts"]:
+        if col in pl.columns:
+            pl[col] = pd.to_numeric(pl[col], errors="coerce").fillna(0)
+
+    pl = pl.sort_values(["pitcher_id", "date"]).reset_index(drop=True)
+
+    # Build per-SP: sorted list of (date_ordinal, era, fip, game_pk)
+    sp_era_history = {}  # pitcher_id -> [(date_ord, era, fip, game_pk)]
+    for pid, group in pl.groupby("pitcher_id"):
+        entries = []
+        for i in range(len(group)):
+            row = group.iloc[i]
+            # Season-to-date stats (same year, all prior starts)
+            season_mask = group["date"].dt.year == row["date"].year
+            prior_mask = group["date"] < row["date"]
+            prior = group[season_mask & prior_mask]
+
+            if len(prior) < 2:
+                continue
+
+            total_ip = prior["ip"].sum()
+            total_er = prior["earned_runs"].sum()
+            total_hr = prior["home_runs"].sum()
+            total_bb = prior["walks"].sum()
+            total_k = prior["strikeouts"].sum()
+
+            if total_ip > 0:
+                era = (total_er / total_ip) * 9.0
+                # FIP = ((13*HR + 3*BB - 2*K) / IP) + 3.1 (constant)
+                fip = ((13 * total_hr + 3 * total_bb - 2 * total_k) / total_ip) + 3.1
+                gpk = int(row["game_pk"])
+                entries.append((row["date"].toordinal(), era, fip, gpk))
+
+        sp_era_history[pid] = entries
+
+    def _find_value_at_date(history, target_ord):
+        """Binary search for the most recent entry at or before target_ord."""
+        if not history:
+            return None
+        ords = [h[0] for h in history]
+        idx = bisect_left(ords, target_ord)
+        if idx > 0:
+            return history[idx - 1]
+        return None
+
+    # ── Step 3: Pre-build per-team game history for batting adjustment ──
+    # Avoids O(N^2) DataFrame filtering in the main loop
+    from collections import defaultdict as _defaultdict
+    team_game_history = _defaultdict(list)  # team_id -> [(date_ord, game_pk)]
+    for _, game in df.sort_values("date").iterrows():
+        game_ord = game["date"].toordinal()
+        gpk = game["game_pk"]
+        for side_key in ["home_team_id", "away_team_id"]:
+            tid = game.get(side_key)
+            if pd.notna(tid):
+                team_game_history[int(tid)].append((game_ord, gpk))
+
+    # Pre-compute league averages per season (cached, not recomputed per game)
+    league_avg_ops_cache = {}   # season -> avg OPS
+    league_avg_era_cache = {}   # season -> avg ERA
+    for season in range(2015, 2027):
+        season_ops = []
+        for t_entries in team_ops_history.values():
+            season_e = [e for e in t_entries
+                        if pd.Timestamp.fromordinal(e[0]).year == season]
+            if season_e:
+                season_ops.append(season_e[-1][1])
+        if season_ops:
+            league_avg_ops_cache[season] = np.mean(season_ops)
+
+        season_eras = []
+        for sp_entries in sp_era_history.values():
+            season_e = [e for e in sp_entries
+                        if pd.Timestamp.fromordinal(e[0]).year == season]
+            if season_e:
+                season_eras.append(season_e[-1][1])
+        if season_eras:
+            league_avg_era_cache[season] = np.mean(season_eras)
+
+    # ── Step 4: For each game, compute opponent-adjusted features ──
+    rows = []
+    n_total = len(df)
+
+    for i, (_, game) in enumerate(df.iterrows()):
+        game_date = pd.to_datetime(game["date"])
+        game_ord = game_date.toordinal()
+        game_season = game_date.year
+        row = {}
+
+        for side in ["home", "away"]:
+            sp_id = game.get(f"{side}_sp_id")
+            tid = game.get(f"{side}_team_id")
+
+            # ── SP opponent adjustment: ERA/FIP adjusted by lineups faced ──
+            if pd.notna(sp_id):
+                sp_id_int = int(sp_id)
+                sp_entries = sp_era_history.get(sp_id_int, [])
+                # Filter to current season, before this game
+                season_entries = [e for e in sp_entries
+                                  if e[0] < game_ord and
+                                  pd.Timestamp.fromordinal(e[0]).year == game_season]
+
+                if len(season_entries) >= 2:
+                    current_era = season_entries[-1][1]
+                    current_fip = season_entries[-1][2]
+
+                    # Look up opposing teams' OPS at each of these starts
+                    opp_ops_values = []
+                    sp_team = int(tid) if pd.notna(tid) else None
+                    for entry in season_entries:
+                        if sp_team is None:
+                            continue
+                        opp_info = opp_lookup.get((entry[3], sp_team))
+                        if opp_info is None:
+                            continue
+                        opp_tid = opp_info["opp_team_id"]
+                        if opp_tid is None:
+                            continue
+
+                        opp_entry = _find_value_at_date(
+                            team_ops_history.get(opp_tid, []), entry[0]
+                        )
+                        if opp_entry is not None:
+                            opp_ops_values.append(opp_entry[1])
+
+                    if len(opp_ops_values) >= 2:
+                        sp_avg_opp_ops = np.mean(opp_ops_values)
+                        league_avg_ops = league_avg_ops_cache.get(game_season)
+                        if league_avg_ops and sp_avg_opp_ops > 0:
+                            ratio = league_avg_ops / sp_avg_opp_ops
+                            row[f"{side}_sp_adj_era"] = current_era * ratio
+                            row[f"{side}_sp_adj_fip"] = current_fip * ratio
+
+            # ── Batting opponent adjustment: OPS/K-rate adjusted by SPs faced ──
+            if pd.notna(tid):
+                tid_int = int(tid)
+                team_entries = team_ops_history.get(tid_int, [])
+                recent_team = [e for e in team_entries if e[0] < game_ord]
+                if len(recent_team) >= 3:
+                    current_ops = recent_team[-1][1]
+                    current_k_rate = recent_team[-1][2]
+
+                    # Look up opposing SPs' ERA at each of team's recent games
+                    opp_era_values = []
+                    tgh = team_game_history.get(tid_int, [])
+                    # Binary search for prior games
+                    prior_idx = bisect_left([g[0] for g in tgh], game_ord)
+                    recent_games = tgh[max(0, prior_idx - BATTING_WINDOW):prior_idx]
+
+                    for tg_ord, tg_gpk in recent_games:
+                        opp_info = opp_lookup.get((tg_gpk, tid_int))
+                        if opp_info is None:
+                            continue
+                        opp_sp = opp_info["opp_sp_id"]
+                        if opp_sp is None:
+                            continue
+
+                        opp_sp_entry = _find_value_at_date(
+                            sp_era_history.get(opp_sp, []), tg_ord
+                        )
+                        if opp_sp_entry is not None:
+                            opp_era_values.append(opp_sp_entry[1])
+
+                    if len(opp_era_values) >= 2:
+                        team_avg_opp_era = np.mean(opp_era_values)
+                        league_avg_era = league_avg_era_cache.get(game_season)
+                        if league_avg_era and team_avg_opp_era > 0:
+                            ratio = league_avg_era / team_avg_opp_era
+                            row[f"{side}_batting_adj_ops"] = current_ops * ratio
+                            row[f"{side}_batting_adj_k_rate"] = current_k_rate / ratio
+
+        rows.append(row)
+
+        if (i + 1) % 5000 == 0:
+            pct = (i + 1) / n_total * 100
+            log.info(f"  Opp-adjusted features: [{i+1}/{n_total}] ({pct:.0f}%)")
+
+    adj_df = pd.DataFrame(rows, index=df.index)
+
+    # Compute diffs
+    for feat in ["sp_adj_era", "sp_adj_fip"]:
+        h_col = f"home_{feat}"
+        a_col = f"away_{feat}"
+        if h_col in adj_df.columns and a_col in adj_df.columns:
+            # Lower ERA is better for pitcher, so away - home = positive means home is better
+            adj_df[f"{feat}_diff"] = adj_df[a_col] - adj_df[h_col]
+
+    for feat in ["batting_adj_ops"]:
+        h_col = f"home_{feat}"
+        a_col = f"away_{feat}"
+        if h_col in adj_df.columns and a_col in adj_df.columns:
+            adj_df[f"{feat}_diff"] = adj_df[h_col] - adj_df[a_col]
+
+    for feat in ["batting_adj_k_rate"]:
+        h_col = f"home_{feat}"
+        a_col = f"away_{feat}"
+        if h_col in adj_df.columns and a_col in adj_df.columns:
+            # Lower K-rate is better for batting, so away - home = positive means home is better
+            adj_df[f"{feat}_diff"] = adj_df[a_col] - adj_df[h_col]
+
+    for col in ["sp_adj_era_diff", "sp_adj_fip_diff",
+                "batting_adj_ops_diff", "batting_adj_k_rate_diff"]:
+        if col in adj_df.columns:
+            pct = adj_df[col].notna().mean() * 100
+            log.info(f"  {col}: {pct:.0f}% populated")
+        else:
+            log.warning(f"  {col}: not computed")
+
+    return adj_df
+
+
+# ── Tier 2: Handedness Split Features ───────────────────────────
+def compute_handedness_split_features(games_df, batter_df, handedness_df,
+                                       pitcher_logs, sp_features_df):
+    """
+    Compute handedness-aware features for both lineups and SPs.
+
+    Lineup features:
+      lineup_ops_vs_hand_diff   — Rolling 20-game OPS from games vs opposing SP's hand only.
+      lineup_k_rate_vs_hand_diff — Same for K-rate.
+
+    SP features (matchup-dependent):
+      sp_whiff_rate_vs_hand_diff — SP's whiff rate vs opposing lineup's dominant bat side.
+      sp_xwoba_vs_hand_diff     — SP's xwOBA vs opposing lineup's dominant bat side.
+    """
+    from collections import defaultdict
+
+    ROLLING_WINDOW = 20
+    MIN_GAMES = 5
+
+    df = games_df.copy()
+    df["date"] = pd.to_datetime(df["date"])
+
+    bat = batter_df.copy()
+    bat["date"] = pd.to_datetime(bat["date"])
+    for col in ["at_bats", "hits", "doubles", "home_runs", "walks", "strikeouts"]:
+        if col in bat.columns:
+            bat[col] = pd.to_numeric(bat[col], errors="coerce").fillna(0)
+
+    # Build handedness lookups
+    sp_hand = {}    # pitcher_id -> 'L' or 'R'
+    bat_hand = {}   # player_id -> 'L', 'R', or 'S'
+    if handedness_df is not None:
+        for _, row in handedness_df.iterrows():
+            pid = row["player_id"]
+            bat_hand[pid] = row.get("bat_side", "R")
+            sp_hand[pid] = row.get("pitch_hand", "R")
+
+    # Build game opposing SP lookup: (game_pk, side) -> opposing SP's hand
+    game_opp_sp_hand = {}
+    for _, game in df.iterrows():
+        gpk = game["game_pk"]
+        h_sp = game.get("home_sp_id")
+        a_sp = game.get("away_sp_id")
+        # Home lineup faces away SP
+        if pd.notna(a_sp):
+            game_opp_sp_hand[(gpk, "home")] = sp_hand.get(int(a_sp), "R")
+        else:
+            game_opp_sp_hand[(gpk, "home")] = "R"
+        # Away lineup faces home SP
+        if pd.notna(h_sp):
+            game_opp_sp_hand[(gpk, "away")] = sp_hand.get(int(h_sp), "R")
+        else:
+            game_opp_sp_hand[(gpk, "away")] = "R"
+
+    # Build per-batter split history: batter_id -> {"L": [...], "R": [...]}
+    # Each entry: (date, ab, h, 2b, hr, bb, k)
+    batter_vs_hand = defaultdict(lambda: {"L": [], "R": []})
+    for _, row in bat.sort_values("date").iterrows():
+        bid = row["batter_id"]
+        gpk = row["game_pk"]
+        side = row["side"]
+        opp_hand = game_opp_sp_hand.get((gpk, side), "R")
+
+        batter_vs_hand[bid][opp_hand].append((
+            row["date"],
+            row["at_bats"],
+            row["hits"],
+            row.get("doubles", 0),
+            row["home_runs"],
+            row["walks"],
+            row["strikeouts"],
+        ))
+
+    # Build per-game lineup
+    game_lineups = defaultdict(lambda: defaultdict(list))
+    for _, row in bat.sort_values(["game_pk", "side", "batting_order"]).iterrows():
+        bo = pd.to_numeric(row.get("batting_order", 0), errors="coerce")
+        if pd.notna(bo) and bo > 0:
+            game_lineups[row["game_pk"]][row["side"]].append(row["batter_id"])
+
+    # Compute features for each game
+    rows = []
+    n_total = len(df)
+
+    for i, (_, game) in enumerate(df.iterrows()):
+        game_date = pd.to_datetime(game["date"])
+        gpk = game["game_pk"]
+        row = {}
+
+        for side in ["home", "away"]:
+            opp_side = "away" if side == "home" else "home"
+            opp_sp_id = game.get(f"{opp_side}_sp_id")
+            opp_hand = "R"
+            if pd.notna(opp_sp_id):
+                opp_hand = sp_hand.get(int(opp_sp_id), "R")
+
+            # ── Lineup vs handedness ──
+            lineup = game_lineups.get(gpk, {}).get(side, [])
+            if len(lineup) >= 5:
+                ops_vs_hand = []
+                k_rate_vs_hand = []
+
+                for bid in lineup[:9]:
+                    games_vs = batter_vs_hand.get(bid, {}).get(opp_hand, [])
+                    prior = [g for g in games_vs if g[0] < game_date]
+                    recent = prior[-ROLLING_WINDOW:]
+
+                    if len(recent) >= MIN_GAMES:
+                        total_ab = sum(g[1] for g in recent)
+                        total_h = sum(g[2] for g in recent)
+                        total_2b = sum(g[3] for g in recent)
+                        total_hr = sum(g[4] for g in recent)
+                        total_bb = sum(g[5] for g in recent)
+                        total_k = sum(g[6] for g in recent)
+                        total_pa = total_ab + total_bb
+
+                        if total_ab > 0 and total_pa > 0:
+                            avg = total_h / total_ab
+                            slg = (total_h - total_2b - total_hr +
+                                   2 * total_2b + 4 * total_hr) / total_ab
+                            obp = (total_h + total_bb) / total_pa
+                            ops_vs_hand.append(obp + slg)
+
+                        if total_pa > 0:
+                            k_rate_vs_hand.append(total_k / total_pa)
+
+                if ops_vs_hand:
+                    row[f"{side}_lineup_ops_vs_hand"] = np.mean(ops_vs_hand)
+                if k_rate_vs_hand:
+                    row[f"{side}_lineup_k_rate_vs_hand"] = np.mean(k_rate_vs_hand)
+
+            # ── SP splits vs opposing lineup's dominant bat side ──
+            # Determine opposing lineup's dominant bat side
+            opp_lineup = game_lineups.get(gpk, {}).get(opp_side, [])
+            if len(opp_lineup) >= 5:
+                side_counts = {"L": 0, "R": 0}
+                for bid in opp_lineup[:9]:
+                    bs = bat_hand.get(bid, "R")
+                    if bs == "S":
+                        # Switch hitters count as opposite of pitcher's hand
+                        sp_id = game.get(f"{side}_sp_id")
+                        this_hand = "R"
+                        if pd.notna(sp_id):
+                            this_hand = sp_hand.get(int(sp_id), "R")
+                        side_counts["L" if this_hand == "R" else "R"] += 1
+                    elif bs in ("L", "R"):
+                        side_counts[bs] += 1
+                dominant_side = "L" if side_counts["L"] > side_counts["R"] else "R"
+
+                # Look up SP's stats vs the dominant bat side from sp_features_df
+                sp_xwoba_col = f"{side}_sp_xwoba_vs_{dominant_side}HB"
+                sp_whiff_col = f"{side}_sp_whiff_rate_vs_{dominant_side}HB"
+
+                if sp_xwoba_col in sp_features_df.columns:
+                    val = sp_features_df.loc[game.name, sp_xwoba_col] if game.name in sp_features_df.index else np.nan
+                    if pd.notna(val):
+                        row[f"{side}_sp_xwoba_vs_hand"] = val
+
+                if sp_whiff_col in sp_features_df.columns:
+                    val = sp_features_df.loc[game.name, sp_whiff_col] if game.name in sp_features_df.index else np.nan
+                    if pd.notna(val):
+                        row[f"{side}_sp_whiff_rate_vs_hand"] = val
+
+        rows.append(row)
+
+        if (i + 1) % 5000 == 0:
+            pct = (i + 1) / n_total * 100
+            log.info(f"  Handedness split features: [{i+1}/{n_total}] ({pct:.0f}%)")
+
+    hand_df = pd.DataFrame(rows, index=df.index)
+
+    # Compute diffs
+    for feat in ["lineup_ops_vs_hand"]:
+        h_col = f"home_{feat}"
+        a_col = f"away_{feat}"
+        if h_col in hand_df.columns and a_col in hand_df.columns:
+            hand_df[f"{feat}_diff"] = hand_df[h_col] - hand_df[a_col]
+
+    for feat in ["lineup_k_rate_vs_hand"]:
+        h_col = f"home_{feat}"
+        a_col = f"away_{feat}"
+        if h_col in hand_df.columns and a_col in hand_df.columns:
+            # Lower K-rate is better for batting: away - home
+            hand_df[f"{feat}_diff"] = hand_df[a_col] - hand_df[h_col]
+
+    for feat in ["sp_whiff_rate_vs_hand"]:
+        h_col = f"home_{feat}"
+        a_col = f"away_{feat}"
+        if h_col in hand_df.columns and a_col in hand_df.columns:
+            # Higher whiff rate is better for pitcher: home - away
+            hand_df[f"{feat}_diff"] = hand_df[h_col] - hand_df[a_col]
+
+    for feat in ["sp_xwoba_vs_hand"]:
+        h_col = f"home_{feat}"
+        a_col = f"away_{feat}"
+        if h_col in hand_df.columns and a_col in hand_df.columns:
+            # Lower xwOBA is better for pitcher: away - home
+            hand_df[f"{feat}_diff"] = hand_df[a_col] - hand_df[h_col]
+
+    for col in ["lineup_ops_vs_hand_diff", "lineup_k_rate_vs_hand_diff",
+                "sp_whiff_rate_vs_hand_diff", "sp_xwoba_vs_hand_diff"]:
+        if col in hand_df.columns:
+            pct = hand_df[col].notna().mean() * 100
+            log.info(f"  {col}: {pct:.0f}% populated")
+        else:
+            log.warning(f"  {col}: not computed")
+
+    return hand_df
+
+
+# ── Tier 3: Pitch-Type Matchup Features ─────────────────────────
+def compute_pitch_type_features(games_df, batter_pitch_stats, batter_df,
+                                 sp_features_df):
+    """
+    Compute lineup wOBA vs opposing SP's pitch-type distribution.
+
+    Uses prior-season batter pitch-type performance weighted by the opposing
+    SP's current season pitch-type percentages.
+
+    Feature:
+      lineup_woba_vs_sp_mix_diff — Weighted avg lineup wOBA vs SP's arsenal.
+    """
+    from collections import defaultdict
+
+    df = games_df.copy()
+    df["date"] = pd.to_datetime(df["date"])
+
+    # Build batter pitch-type wOBA lookup: (batter_id, season, pitch_type) -> woba
+    batter_pt_lookup = {}  # (batter_id, season, pitch_type) -> woba
+    batter_pt_xwoba_lookup = {}  # (batter_id, season, pitch_type) -> est_woba (xwOBA)
+    if batter_pitch_stats is not None:
+        for _, row in batter_pitch_stats.iterrows():
+            key = (row["batter_id"], row["season"], row["pitch_type"])
+            batter_pt_lookup[key] = row.get("woba", np.nan)
+            batter_pt_xwoba_lookup[key] = row.get("est_woba", np.nan)
+
+    # Build per-game lineup
+    bat = batter_df.copy()
+    bat["date"] = pd.to_datetime(bat["date"])
+    game_lineups = defaultdict(lambda: defaultdict(list))
+    for _, row in bat.sort_values(["game_pk", "side", "batting_order"]).iterrows():
+        bo = pd.to_numeric(row.get("batting_order", 0), errors="coerce")
+        if pd.notna(bo) and bo > 0:
+            game_lineups[row["game_pk"]][row["side"]].append(row["batter_id"])
+
+    # Pitch-type groupings matching the Statcast aggregation
+    # Map from Statcast pitch_type codes to pybaseball pitch arsenal codes
+    PITCH_TYPE_GROUPS = {
+        "FF": "FF", "SI": "SI", "FC": "FC",
+        "SL": "SL", "CU": "CU", "ST": "ST", "KC": "KC", "SV": "SV",
+        "CH": "CH", "FS": "FS",
+    }
+
+    rows = []
+    n_total = len(df)
+
+    for i, (_, game) in enumerate(df.iterrows()):
+        game_date = pd.to_datetime(game["date"])
+        gpk = game["game_pk"]
+        # Prior season for batter lookup (no look-ahead)
+        prior_season = game_date.year - 1
+        row = {}
+
+        for side in ["home", "away"]:
+            opp_side = "away" if side == "home" else "home"
+
+            # Get opposing SP's pitch-type percentages from sp_features
+            # These are season-to-date averages from get_pitcher_stats()
+            opp_sp_fastball = np.nan
+            opp_sp_breaking = np.nan
+            opp_sp_offspeed = np.nan
+            if game.name in sp_features_df.index:
+                opp_sp_fastball = sp_features_df.loc[game.name].get(
+                    f"{opp_side}_sp_fastball_pct", np.nan)
+                opp_sp_breaking = sp_features_df.loc[game.name].get(
+                    f"{opp_side}_sp_breaking_pct", np.nan)
+                opp_sp_offspeed = sp_features_df.loc[game.name].get(
+                    f"{opp_side}_sp_offspeed_pct", np.nan)
+
+            # Skip if we don't have SP pitch mix data
+            if pd.isna(opp_sp_fastball):
+                continue
+
+            # Normalize percentages to weights that sum to 1
+            total_pct = 0
+            for v in [opp_sp_fastball, opp_sp_breaking, opp_sp_offspeed]:
+                if pd.notna(v):
+                    total_pct += v
+            if total_pct <= 0:
+                continue
+
+            # Map grouped percentages to individual pitch types proportionally
+            # Use simplified 3-bucket weighting
+            fb_weight = opp_sp_fastball / total_pct if pd.notna(opp_sp_fastball) else 0
+            br_weight = opp_sp_breaking / total_pct if pd.notna(opp_sp_breaking) else 0
+            os_weight = opp_sp_offspeed / total_pct if pd.notna(opp_sp_offspeed) else 0
+
+            # Compute lineup wOBA and xwOBA vs SP's pitch mix
+            lineup = game_lineups.get(gpk, {}).get(side, [])
+            if len(lineup) < 5:
+                continue
+
+            lineup_woba_values = []
+            lineup_xwoba_values = []
+            for bid in lineup[:9]:
+                # Look up batter's wOBA vs each pitch group from prior season
+                fb_types = ["FF", "SI", "FC"]
+                br_types = ["SL", "CU", "ST", "KC", "SV"]
+                os_types = ["CH", "FS"]
+
+                def _avg_for_types(types, lookup):
+                    vals = []
+                    for pt in types:
+                        w = lookup.get((bid, prior_season, pt))
+                        if pd.notna(w):
+                            vals.append(w)
+                    return np.mean(vals) if vals else np.nan
+
+                fb_woba = _avg_for_types(fb_types, batter_pt_lookup)
+                br_woba = _avg_for_types(br_types, batter_pt_lookup)
+                os_woba = _avg_for_types(os_types, batter_pt_lookup)
+
+                fb_xwoba = _avg_for_types(fb_types, batter_pt_xwoba_lookup)
+                br_xwoba = _avg_for_types(br_types, batter_pt_xwoba_lookup)
+                os_xwoba = _avg_for_types(os_types, batter_pt_xwoba_lookup)
+
+                # Weighted average (wOBA)
+                weighted_sum = 0
+                weight_sum = 0
+                for w, woba_val in [(fb_weight, fb_woba),
+                                     (br_weight, br_woba),
+                                     (os_weight, os_woba)]:
+                    if pd.notna(woba_val) and w > 0:
+                        weighted_sum += w * woba_val
+                        weight_sum += w
+                if weight_sum > 0:
+                    lineup_woba_values.append(weighted_sum / weight_sum)
+
+                # Weighted average (xwOBA)
+                xw_sum = 0
+                xw_weight = 0
+                for w, xwoba_val in [(fb_weight, fb_xwoba),
+                                      (br_weight, br_xwoba),
+                                      (os_weight, os_xwoba)]:
+                    if pd.notna(xwoba_val) and w > 0:
+                        xw_sum += w * xwoba_val
+                        xw_weight += w
+                if xw_weight > 0:
+                    lineup_xwoba_values.append(xw_sum / xw_weight)
+
+            if lineup_woba_values:
+                row[f"{side}_lineup_woba_vs_sp_mix"] = np.mean(lineup_woba_values)
+            if lineup_xwoba_values:
+                row[f"{side}_lineup_xwoba_vs_sp_mix"] = np.mean(lineup_xwoba_values)
+
+        rows.append(row)
+
+        if (i + 1) % 5000 == 0:
+            pct = (i + 1) / n_total * 100
+            log.info(f"  Pitch-type features: [{i+1}/{n_total}] ({pct:.0f}%)")
+
+    pt_df = pd.DataFrame(rows, index=df.index)
+
+    # Compute diffs
+    for feat in ["lineup_woba_vs_sp_mix", "lineup_xwoba_vs_sp_mix"]:
+        h_col = f"home_{feat}"
+        a_col = f"away_{feat}"
+        if h_col in pt_df.columns and a_col in pt_df.columns:
+            pt_df[f"{feat}_diff"] = pt_df[h_col] - pt_df[a_col]
+
+    for col in ["lineup_woba_vs_sp_mix_diff", "lineup_xwoba_vs_sp_mix_diff"]:
+        if col in pt_df.columns:
+            pct = pt_df[col].notna().mean() * 100
+            log.info(f"  {col}: {pct:.0f}% populated")
+        else:
+            log.warning(f"  {col}: not computed")
+
+    return pt_df
+
+
+# ── Interaction Features ─────────────────────────────────────────
+def compute_interaction_features(training_df):
+    """
+    Compute interaction features that compound existing signal.
+    Called AFTER all feature DataFrames are assembled.
+
+    Features:
+      sp_k_x_lineup_k_diff        — High-K SP vs high-K lineup interaction.
+      sp_whiff_x_lineup_ops_diff  — SP stuff vs lineup quality interaction.
+      sp_fip_x_momentum_diff      — Good pitcher + hot team synergy.
+      platoon_magnitude_diff       — Platoon advantage weighted by actual OPS-vs-hand.
+    """
+    df = training_df
+    result = pd.DataFrame(index=df.index)
+
+    # sp_k_x_lineup_k: (home_sp_k_pct * away_lineup_k_rate) - (away_sp_k_pct * home_lineup_k_rate)
+    if all(c in df.columns for c in ["home_sp_k_pct", "away_sp_k_pct",
+                                       "home_lineup_k_rate", "away_lineup_k_rate"]):
+        h_val = df["home_sp_k_pct"] * df["away_lineup_k_rate"]
+        a_val = df["away_sp_k_pct"] * df["home_lineup_k_rate"]
+        result["sp_k_x_lineup_k_diff"] = h_val - a_val
+
+    # sp_whiff_x_lineup_ops: (home_sp_whiff * (1 - away_ops)) - (away_sp_whiff * (1 - home_ops))
+    if all(c in df.columns for c in ["home_sp_whiff_rate", "away_sp_whiff_rate",
+                                       "home_lineup_ops", "away_lineup_ops"]):
+        h_val = df["home_sp_whiff_rate"] * (1.0 - df["away_lineup_ops"])
+        a_val = df["away_sp_whiff_rate"] * (1.0 - df["home_lineup_ops"])
+        result["sp_whiff_x_lineup_ops_diff"] = h_val - a_val
+
+    # sp_fip_x_momentum: ((4.5 - home_fip) * home_run_diff_10) - ((4.5 - away_fip) * away_run_diff_10)
+    if all(c in df.columns for c in ["home_sp_fip", "away_sp_fip",
+                                       "home_run_diff_10", "away_run_diff_10"]):
+        h_val = (4.5 - df["home_sp_fip"]) * df["home_run_diff_10"]
+        a_val = (4.5 - df["away_sp_fip"]) * df["away_run_diff_10"]
+        result["sp_fip_x_momentum_diff"] = h_val - a_val
+
+    # platoon_magnitude: (home_platoon_pct * home_ops_vs_hand) - (away_platoon_pct * away_ops_vs_hand)
+    if all(c in df.columns for c in ["home_platoon_advantage_pct", "away_platoon_advantage_pct",
+                                       "home_lineup_ops_vs_hand", "away_lineup_ops_vs_hand"]):
+        h_val = df["home_platoon_advantage_pct"] * df["home_lineup_ops_vs_hand"]
+        a_val = df["away_platoon_advantage_pct"] * df["away_lineup_ops_vs_hand"]
+        result["platoon_magnitude_diff"] = h_val - a_val
+
+    for col in result.columns:
+        pct = result[col].notna().mean() * 100
+        log.info(f"  {col}: {pct:.0f}% populated")
+
+    return result
 
 
 # ── Odds Merge ───────────────────────────────────────────────────
@@ -1518,13 +2366,22 @@ def main():
             statcast = pd.read_csv(STATCAST_FILE)
             statcast_cols = ["pitcher_id", "game_pk", "statcast_pitches",
                              "xwoba", "hard_hit_pct", "barrel_pct",
-                             "groundball_pct", "flyball_pct", "whiff_rate"]
+                             "groundball_pct", "flyball_pct", "whiff_rate",
+                             "xwoba_vs_LHB", "xwoba_vs_RHB",
+                             "whiff_rate_vs_LHB", "whiff_rate_vs_RHB",
+                             "fastball_pct", "breaking_pct", "offspeed_pct",
+                             "primary_pitch_pct", "pitch_mix_entropy",
+                             "avg_fastball_velo", "max_fastball_velo",
+                             "zone_pct", "csw_pct", "chase_rate"]
             statcast = statcast[[c for c in statcast_cols if c in statcast.columns]]
             pitcher_logs = pitcher_logs.merge(statcast, on=["pitcher_id", "game_pk"], how="left")
             sc_pct = pitcher_logs["xwoba"].notna().mean()
             log.info(f"Statcast merged: {sc_pct:.0%} coverage ({len(statcast)} rows)")
         else:
             log.warning(f"Statcast file not found: {STATCAST_FILE}")
+        # Rename pitches_thrown -> pitches for StartingPitcherComputer compatibility
+        if "pitches_thrown" in pitcher_logs.columns:
+            pitcher_logs = pitcher_logs.rename(columns={"pitches_thrown": "pitches"})
     else:
         log.warning(f"Pitcher logs not found: {PITCHER_LOGS_FILE}")
 
@@ -1657,6 +2514,54 @@ def main():
         lineup_features = pd.DataFrame(index=games.index)
         log.warning("  Skipping lineup features (no batter/handedness data)")
 
+    # ── Build opponent lookup (used by Tiers 1-3) ─────────────
+    log.info("=" * 60)
+    log.info("Building opponent lookup")
+    log.info("=" * 60)
+    opp_lookup = build_game_opponent_lookup(games)
+
+    # ── Tier 1: Opponent-adjusted features ─────────────────────
+    log.info("=" * 60)
+    log.info("Computing Tier 1: opponent-adjusted features")
+    log.info("=" * 60)
+    if pitcher_logs is not None and batting_logs is not None:
+        opp_adj_features = compute_opponent_adjusted_features(
+            games, pitcher_logs, batting_logs, opp_lookup)
+    else:
+        opp_adj_features = pd.DataFrame(index=games.index)
+        log.warning("  Skipping opponent-adjusted features (no pitcher/batting data)")
+
+    # ── Tier 2: Handedness split features ──────────────────────
+    log.info("=" * 60)
+    log.info("Computing Tier 2: handedness split features")
+    log.info("=" * 60)
+    if batter_logs is not None and handedness is not None:
+        hand_split_features = compute_handedness_split_features(
+            games, batter_logs, handedness, pitcher_logs, sp_features)
+    else:
+        hand_split_features = pd.DataFrame(index=games.index)
+        log.warning("  Skipping handedness split features (no batter/handedness data)")
+
+    # ── Tier 3: Pitch-type matchup features ────────────────────
+    log.info("=" * 60)
+    log.info("Computing Tier 3: pitch-type matchup features")
+    log.info("=" * 60)
+    BATTER_PITCH_TYPE_FILE = HISTORICAL_DIR / "batter_pitch_type_stats.csv"
+    batter_pitch_stats = None
+    if BATTER_PITCH_TYPE_FILE.exists():
+        batter_pitch_stats = pd.read_csv(BATTER_PITCH_TYPE_FILE)
+        log.info(f"Batter pitch-type stats: {len(batter_pitch_stats)} rows")
+    else:
+        log.warning(f"Batter pitch-type stats not found: {BATTER_PITCH_TYPE_FILE}")
+        log.warning("Run scripts/fetch_batter_pitch_type_stats.py first")
+
+    if batter_pitch_stats is not None and batter_logs is not None:
+        pitch_type_features = compute_pitch_type_features(
+            games, batter_pitch_stats, batter_logs, sp_features)
+    else:
+        pitch_type_features = pd.DataFrame(index=games.index)
+        log.warning("  Skipping pitch-type features (no batter pitch-type data)")
+
     # ── Merge odds ───────────────────────────────────────────────
     log.info("=" * 60)
     log.info("Merging odds")
@@ -1700,8 +2605,24 @@ def main():
         travel_features.reset_index(drop=True),
         sched_features.reset_index(drop=True),
         lineup_features.reset_index(drop=True),
+        opp_adj_features.reset_index(drop=True),
+        hand_split_features.reset_index(drop=True),
+        pitch_type_features.reset_index(drop=True),
         odds_features.reset_index(drop=True),
     ], axis=1)
+
+    # ── Interaction features (computed from assembled training data) ──
+    log.info("=" * 60)
+    log.info("Computing interaction features")
+    log.info("=" * 60)
+    interaction_features = compute_interaction_features(training)
+    training = pd.concat([training, interaction_features], axis=1)
+
+    # ── Deduplicate columns ───────────────────────────────────────
+    dupes = training.columns[training.columns.duplicated()].tolist()
+    if dupes:
+        log.warning(f"  Removing {len(dupes)} duplicate columns: {set(dupes)}")
+        training = training.loc[:, ~training.columns.duplicated()]
 
     # ── Leakage check ────────────────────────────────────────────
     log.info("Running leakage check...")
