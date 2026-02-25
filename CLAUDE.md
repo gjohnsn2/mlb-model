@@ -9,11 +9,12 @@ Change Log at the bottom.
 A Major League Baseball gambling model targeting full-game moneyline and totals.
 Built using XGBoost + walk-forward validation + Boruta feature selection.
 
-**Current phase**: DEPLOYMENT — Daily Lasso pipeline built and ready.
+**Current phase**: PRE-DEPLOYMENT — Model built, pipeline ready, paper trading first.
 Ridge/Lasso no-market model: +7.8% ROI at >=1.5 run threshold (p=0.005).
 Daily pipeline: `run_daily.sh predict` runs schedule→lineups→odds→features→predict→edges.
 Production model trained via `06c_train_production_lasso.py`.
 Caution: 2025 season is -14.6% at that threshold (8/9 seasons positive).
+**Deployment plan**: Paper trade first 75 bets → go live only if early ROI > -20%.
 
 ## Project Structure
 ```
@@ -28,6 +29,7 @@ mlb-model/
 ├── 07_predict.py                  # DAILY: Lasso predictions for today's games
 ├── 08_find_edges.py               # DAILY: margin-space edge detection → betting card
 ├── 10_backtest_mlb.py             # Historical profitability backtest
+├── 15_montecarlo_ruin.py          # Monte Carlo bankroll simulation & ruin analysis
 ├── 14_update_daily_data.py        # DAILY: append yesterday's results to historical files
 ├── run_daily.sh                   # Pipeline orchestrator (predict/evaluate/update/train)
 ├── scripts/
@@ -49,6 +51,8 @@ mlb-model/
 │   ├── mlb_selected_features.json # Boruta-selected features
 │   ├── mlb_training_metrics.json  # Walk-forward RMSE, fold metrics
 │   ├── mlb_backtest_report.txt    # Backtest summary
+│   ├── montecarlo_ruin_report.txt # Monte Carlo ruin analysis
+│   ├── montecarlo_ruin_report.png # Monte Carlo visualization (4-panel)
 │   └── trained/                   # .pkl model bundles (git-ignored)
 │       ├── lasso_margin_nomarket.pkl  # Production margin Lasso
 │       └── lasso_total_nomarket.pkl   # Production total Lasso
@@ -71,6 +75,7 @@ python3 00_build_mlb_historical.py    # Rebuild features (25K games)
 python3 06_train_mlb_model.py --no-market  # Baseball-only XGBoost (walk-forward)
 python3 06c_ridge_lasso_experiment.py --no-market  # Ridge/Lasso walk-forward
 python3 10_backtest_mlb.py --no-market # Backtest Lasso OOF predictions
+python3 15_montecarlo_ruin.py         # Monte Carlo ruin analysis (10K paths)
 
 # Data fetching (run once, resumable)
 python3 scripts/fetch_historical_games.py     # ~4 hours
@@ -131,6 +136,28 @@ Signal is real but linear — XGBoost can't find strong enough splits.
 | **2025** | **244** | **-14.6%** |
 
 **CAUTION**: 2025 is strongly negative. 8/9 seasons positive but latest season fails.
+2025 failure is entirely dog-driven: 31.1% dog win rate vs 39.8% historical.
+
+### Monte Carlo Ruin Analysis ($25K bankroll, 1% units)
+| Metric | 1 Season | 3 Seasons | 5 Seasons |
+|--------|----------|-----------|-----------|
+| P(hard ruin) | 0% | 0% | 0% |
+| P(25% DD pause) | 78% | 99% | 99.9% |
+| P(50% drawdown) | 22% | 58% | 78% |
+| Median bankroll | $36,773 | $69,490 | $132,901 |
+| 5th %ile bankroll | $7,197 | $6,003 | $6,246 |
+
+Kelly: current sizing (1% x 2.4u avg = 2.45%) is ~half Kelly (4.63%).
+
+### Early-Season Predictiveness
+First 75 bets (~early June) predict full-season ROI with **r=0.91, p=0.001**.
+2025 was -38.6% at 75 bets (worst ever, next worst -13.9%). Clear separation.
+
+### Staged Deployment Plan (2026 Season)
+1. **Paper trade first 75 bets** (Opening Day ~Mar 27 → ~early June)
+2. Early ROI < -20%: DO NOT deploy | -20% to 0%: deploy at 0.5% units | > 0%: deploy at 1%
+3. Re-evaluate at 150 bets (~late July), scale up/down
+4. 25% drawdown pause remains active as circuit breaker
 
 ### XGBoost Market-Only (Reference)
 Still beats Pinnacle (+6.9% ROI) but NOT clean consensus (-2.9%).
@@ -221,3 +248,7 @@ The edge is consensus-vs-Pinnacle disagreement, not model alpha.
 | 2026-02-25 | Daily pipeline built: 05→07→08 (features→predict→edges) + 14 (data updater) + run_daily.sh | Production-ready |
 | 2026-02-25 | Production Lasso training script (06c_train_production_lasso.py) saves .pkl bundle | Deployable model |
 | 2026-02-25 | config.py: added ODDS_MARKETS alias (fixes 04_fetch_odds.py import) | Bug fix |
+| 2026-02-25 | Monte Carlo ruin analysis (15_montecarlo_ruin.py): 10K-path season-block bootstrap | Risk quantified |
+| 2026-02-25 | 2025 failure diagnosis: dog win rate collapsed 31.1% vs 39.8% historical | Root cause identified |
+| 2026-02-25 | Early-season predictiveness: first 75 bets predict full season (r=0.91, p=0.001) | Deployment gate found |
+| 2026-02-25 | Staged deployment plan: paper trade 75 bets → go/no-go at -20% ROI threshold | Pre-deployment protocol |

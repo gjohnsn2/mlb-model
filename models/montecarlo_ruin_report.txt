@@ -1,0 +1,98 @@
+MONTE CARLO BANKROLL SIMULATION & RUIN ANALYSIS
+======================================================================
+Generated: 2026-02-25 01:31
+Model: Lasso no-market | Threshold: >= 1.5 runs
+Bankroll: $25,000 | Unit sizing: 1% of bankroll per unit
+Monte Carlo: 10,000 paths, 5 seasons each (block bootstrap)
+
+======================================================================
+HISTORICAL LASSO BET-LEVEL SUMMARY (>= 1.5 runs, fixed $100/unit)
+======================================================================
+Total bets: 2342
+Record: 1028-1314
+Win rate: 43.9%
+Total risked: $573,400
+Total profit: $+42,810
+ROI: +7.5%
+
+ Season |  Bets |     W-L |   Win% |    Risked |    Profit |     ROI
+-----------------------------------------------------------------
+   2017 |   221 | 106-115 |  48.0% | $  51,600 | $  +4,812 |   +9.3%
+   2018 |   254 | 117-137 |  46.1% | $  58,600 | $  +6,422 |  +11.0%
+   2019 |   161 |  71-90  |  44.1% | $  37,100 | $  +4,463 |  +12.0%
+   2020 |   160 |  76-84  |  47.5% | $  40,800 | $ +13,617 |  +33.4%
+   2021 |   382 | 179-203 |  46.9% | $  94,500 | $ +11,471 |  +12.1%
+   2022 |   266 | 118-148 |  44.4% | $  68,200 | $ +12,593 |  +18.5%
+   2023 |   314 | 129-185 |  41.1% | $  76,500 | $  -3,751 |   -4.9%
+   2024 |   292 | 124-168 |  42.5% | $  73,200 | $  +4,069 |   +5.6%
+   2025 |   292 | 108-184 |  37.0% | $  72,900 | $ -10,886 |  -14.9%
+
+======================================================================
+PER-BET PROFIT DISTRIBUTION (fixed $100/unit)
+======================================================================
+Mean:   $   +18.3
+Median: $  -200.0
+Std:    $   354.6
+Min:    $    -300
+Max:    $   +1860
+Skew:   1.336
+
+======================================================================
+MONTE CARLO RESULTS (proportional unit sizing)
+======================================================================
+
+── Ruin Probabilities ──
+     Horizon |    Hard Ruin |   25% DD Pause |   50% Drawdown
+------------------------------------------------------------
+   1 season  |       0.00%  |         78.0%  |        22.13%
+   2 seasons |       0.00%  |         95.4%  |        43.24%
+   3 seasons |       0.00%  |         98.9%  |        58.09%
+   5 seasons |       0.00%  |         99.9%  |        78.08%
+
+── Expected Bankroll by Horizon ──
+     Horizon |   5th %ile |  25th %ile |     Median |  75th %ile |  95th %ile
+---------------------------------------------------------------------------
+   1 season  | $    7,197 | $   31,189 | $   36,773 | $   61,764 | $   83,315
+   2 seasons | $    8,947 | $   20,851 | $   53,120 | $  104,241 | $  205,835
+   3 seasons | $    6,003 | $   29,472 | $   69,490 | $  172,799 | $  398,654
+   4 seasons | $    6,944 | $   36,769 | $   97,624 | $  258,808 | $  837,677
+   5 seasons | $    6,246 | $   42,808 | $  132,901 | $  405,054 | $1,444,509
+
+── Max Drawdown Distribution ──
+5th percentile:  42.9%
+25th percentile: 52.2%
+Median:          68.5%
+75th percentile: 80.3%
+95th percentile: 93.1%
+Max:             99.2%
+
+── Longest Losing Streak ──
+Median:          11
+75th percentile: 14
+95th percentile: 14
+Max:             14
+
+======================================================================
+KELLY CRITERION ANALYSIS
+======================================================================
+Historical win rate:    43.9%
+Avg decimal odds:       2.724
+Avg win net payout:     1.429
+Avg units per bet:      2.4u
+Full Kelly fraction:    4.63% of bankroll per bet
+Half Kelly:             2.32%
+Quarter Kelly:          1.16%
+Current sizing:         2.45% (1% x 2.4u avg)
+Assessment: Aggressive — current is 0.5x full Kelly (~half Kelly)
+
+======================================================================
+NOTES
+======================================================================
+- Season-block bootstrap preserves intra-season streaks and correlation
+- Proportional sizing: unit_value = bankroll * 1%, risk = units * unit_value
+- Hard ruin = bankroll <= $0 (impossible with proportional sizing unless
+  a single bet can lose 100%, which can't happen with 1-3% risk per bet)
+- 25% drawdown pause = model stops betting (functional ruin)
+- 50% drawdown = psychological ruin threshold
+- Kelly assumes i.i.d. bets; actual bets have correlation within seasons
+- 2025 season (-14.6% ROI) is included in the bootstrap pool
