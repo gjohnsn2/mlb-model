@@ -9,10 +9,11 @@ Change Log at the bottom.
 A Major League Baseball gambling model targeting full-game moneyline and totals.
 Built using XGBoost + walk-forward validation + Boruta feature selection.
 
-**Current phase**: RESEARCH COMPLETE — model is purely market-driven.
-No baseball feature (SP, batting, bullpen, park, weather, lineup) survives Boruta.
-Model beats Pinnacle (+6.9% ROI) but NOT clean consensus (-2.9%).
-Betting is paused pending discovery of non-market features that survive selection.
+**Current phase**: RESEARCH — Ridge/Lasso finds real baseball signal.
+Rate stat bug fixed (all baseball features were NaN before). Now 10 baseball
+features survive Boruta (XGBoost) and 39 survive Lasso. Ridge/Lasso beats XGBoost
+on no-market features: +7.8% ROI at >=1.5 threshold (p=0.005).
+Caution: 2025 season is -14.6% at that threshold (8/9 seasons positive).
 
 ## Project Structure
 ```
@@ -21,7 +22,10 @@ mlb-model/
 ├── feature_engine.py              # Feature engine (template, shared utility)
 ├── 00_build_mlb_historical.py     # Build training data from historical archives
 ├── 06_train_mlb_model.py          # XGBoost walk-forward training + Boruta
+├── 06c_ridge_lasso_experiment.py  # Ridge/Lasso walk-forward (the breakthrough)
 ├── 10_backtest_mlb.py             # Historical profitability backtest
+├── 10b_backtest_f5_nrfi.py        # F5 + NRFI backtest
+├── 11_segmented_backtest.py       # Segmented backtest (find profitable subsets)
 ├── 12c_fetch_mlb_pinnacle.py      # Fetch Pinnacle H2H + totals (eu region)
 ├── 12d_validate_mlb_pinnacle.py   # Pinnacle validation analysis
 ├── scripts/
@@ -29,7 +33,8 @@ mlb-model/
 │   ├── fetch_bullpen_data.py      # Fetch per-reliever game logs (169K rows)
 │   ├── fetch_batter_data.py       # Fetch per-batter boxscore data (598K rows)
 │   ├── fetch_player_handedness.py # Fetch bat/pitch handedness (4K players)
-│   ├── fetch_historical_statcast.py # Fetch Statcast metrics per pitcher
+│   ├── fetch_historical_statcast.py # Fetch Statcast metrics per pitcher (incl. handedness splits, pitch mix)
+│   ├── fetch_batter_pitch_type_stats.py # Fetch batter pitch-type stats (2019-2025)
 │   ├── merge_pitcher_logs.py      # Merge MLB API + Statcast pitcher logs
 │   ├── integrate_historical_mlb_odds.py # Integrate Sports-Statistics odds
 │   └── experiment_market_free_mlb.py    # Market-free feature experiment
@@ -56,8 +61,11 @@ mlb-model/
 ```bash
 # Full rebuild + train + backtest pipeline
 python3 00_build_mlb_historical.py    # Rebuild features (25K games)
-python3 06_train_mlb_model.py         # Walk-forward + Boruta
+python3 06_train_mlb_model.py         # Walk-forward + Boruta (XGBoost)
+python3 06_train_mlb_model.py --no-market  # Baseball-only XGBoost
+python3 06c_ridge_lasso_experiment.py --no-market  # Ridge/Lasso (best model)
 python3 10_backtest_mlb.py            # Profitability backtest
+python3 10_backtest_mlb.py --no-market # Backtest no-market OOF predictions
 
 # Data fetching (run once, resumable)
 python3 scripts/fetch_historical_games.py     # ~4 hours
@@ -80,74 +88,83 @@ python3 12d_validate_mlb_pinnacle.py  # Analyze edge vs Pinnacle
 | **Sports-Statistics** | None | `scripts/integrate_historical_mlb_odds.py` | Single-book odds 2015-2021 (backfill) |
 
 ## Core Modeling Decisions
-- **Model**: XGBoost Regressor (separate margin + total models)
+- **Best model**: Ridge/Lasso on baseball-only features (no market inputs)
+- **XGBoost**: Still used for Boruta feature selection; Ridge/Lasso outperforms it
 - **Targets**: Home margin and combined score
-- **Training**: 25,611 games (2015-2025, 11 seasons)
-- **Feature selection**: Boruta (100 iterations, alpha=0.05)
-- **Validation**: Walk-forward 9-fold (test seasons 2017-2025), per-fold Boruta
+- **Training**: 25,611 games (2015-2025, 11 seasons), 91 candidate features
+- **Feature selection**: Boruta for XGBoost, L1 penalty for Lasso (39 features survive)
+- **Validation**: Walk-forward 9-fold (test seasons 2017-2025), per-fold selection
 - **Sample weighting**: Exponential decay (half_life=3yr)
-- **Edge thresholds**: ML prob edge >=5%, Total edge >=1.5 runs
+- **Edge thresholds**: ML margin edge >=1.5 runs (calibrated margin space)
 - **Sign convention**: Positive margin = home team wins
 
-## Current Performance (2026-02-23)
+## Current Performance (2026-02-24)
 
-### Walk-Forward Results
-| Model | RMSE | MAE | OOF Samples | Features |
-|-------|------|-----|-------------|----------|
-| **Margin** | 4.49 | 3.48 | 20,688 | 4 |
-| **Total** | 4.37 | 3.41 | 20,319 | 3 |
+### Ridge/Lasso No-Market (Best Model)
+| Metric | XGBoost | Ridge | Lasso |
+|--------|---------|-------|-------|
+| RMSE | 4.524 | 4.447 | 4.447 |
+| corr(model, actual) | 0.111 | 0.176 | 0.179 |
+| corr(edge, mkt_resid) | 0.049 | 0.065 | 0.064 |
+| ROI >= 0.5 | -2.3% | -0.0% | +0.3% |
+| ROI >= 1.5 | -1.6% | +6.2% (p=.018) | **+7.8% (p=.005)** |
+| ROI >= 2.0 | +1.5% | +12.4% (p=.004) | +12.7% (p=.004) |
 
-### Selected Features (Boruta)
-**Margin**: `market_implied_prob` (9/9), `market_logit` (9/9), `num_books` (5/9), `consensus_total` (4/9)
-**Total**: `consensus_total` (9/9), `temp` (7/9), `num_books` (4/9)
+### Lasso Stable Features (9/9 folds, no-market)
+`sp_season_ip_diff`, `sp_k_pct_diff`, `bb_rate_diff`, `team_run_diff_10_diff`,
+`bullpen_whip_diff`, `lineup_power_diff`, `star_missing_ops_diff`,
+`lineup_top_heavy_diff`, `lineup_bb_k_ratio_diff`
 
-**CRITICAL**: Model is purely market-driven. Zero of 69 baseball features survive Boruta.
-`lineup_k_rate_diff` appeared in 3/9 total folds (closest, but not enough).
+**39 features survive Lasso (>= 4/9 folds)** vs 8 for XGBoost+Boruta.
+Signal is real but linear — XGBoost can't find strong enough splits.
 
-### Backtest (Clean Consensus, |ML| >= 100 filter)
-| Threshold | Bets | W-L | Win% | ROI |
-|-----------|------|-----|------|-----|
-| >= 0.00 | 18,065 | 8766-9299 | 48.5% | -2.8% |
-| >= 0.50 (prod) | 6,983 | 3260-3723 | 46.7% | **-2.9%** |
-| >= 1.00 | 2,234 | 951-1283 | 42.6% | -2.5% |
+### Lasso No-Market ROI by Season (>= 1.5 runs)
+| Season | Bets | ROI |
+|--------|------|-----|
+| 2017-2019 | 673 | +9.5% |
+| 2020 | 114 | +16.8% |
+| 2021 | 242 | +14.3% |
+| 2022 | 226 | +11.7% |
+| 2023 | 283 | +7.0% |
+| 2024 | 282 | +2.5% |
+| **2025** | **244** | **-14.6%** |
 
-**No edge against clean consensus at any threshold.**
+**CAUTION**: 2025 is strongly negative. 8/9 seasons positive but latest season fails.
 
-### Pinnacle Validation
-| Threshold | Consensus ROI | Pinnacle ROI |
-|-----------|--------------|--------------|
-| >= 0.00 | -2.9% | +3.5% |
-| >= 0.50 (prod) | **-3.7%** | **+6.9%** (p=0.000) |
-| >= 1.00 | -6.6% | +18.0% |
+### XGBoost Market-Only (Reference)
+Still beats Pinnacle (+6.9% ROI) but NOT clean consensus (-2.9%).
+The edge is consensus-vs-Pinnacle disagreement, not model alpha.
 
-**Model beats Pinnacle but NOT clean consensus.** The edge is consensus-vs-Pinnacle
-disagreement flowing through a consensus-correlated model.
+## 91 Candidate Features (No-Market)
+| Category | Count | Boruta (XGB) | Lasso (>=4/9) |
+|----------|-------|-------------|---------------|
+| SP season stats | 15 | 3 | 8 |
+| SP velocity/command (Statcast) | 5 | 0 | 2 |
+| SP recency (last 3) | 10 | 1 | 5 |
+| Batting | 6 | 1 | 4 |
+| Context (park, ump, weather, dome) | 7 | 2 | 3 |
+| Rest/Workload | 3 | 1 | 2 |
+| Momentum | 2 | 1 | 2 |
+| Bullpen | 5 | 0 | 3 |
+| Bullpen availability | 4 | 0 | 1 |
+| Travel & fatigue | 5 | 0 | 1 |
+| Schedule context | 3 | 0 | 1 |
+| Lineup composition | 11 | 3 | 5 |
+| Opponent-adjusted | 4 | 0 | 2 |
+| Handedness splits | 4 | 0 | 0 |
+| Pitch-type matchups | 5 | 0 | 0 |
+| Interaction features | 4 | 0 | 0 |
 
-Pinnacle ROI by season (>= 0.5 runs):
-| Season | Bets | Win% | ROI |
-|--------|------|------|-----|
-| 2020 | 289 | 51.9% | +15.1% |
-| 2021 | 667 | 51.7% | +12.9% |
-| 2022 | 698 | 51.4% | +10.4% |
-| 2023 | 711 | 53.4% | +9.1% |
-| **2024** | **646** | **44.6%** | **-7.6%** |
-| 2025 | 631 | 50.7% | +5.4% |
-
-## 69 Candidate Features Tested
-| Category | Count | Survived |
-|----------|-------|----------|
-| SP season stats | 14 | 0 |
-| SP recency (last 3) | 10 | 0 |
-| Batting | 6 | 0 |
-| Market-derived | 4 | **4** (margin) / **2** (total) |
-| Context (park, ump, weather, dome) | 7 | **1** (temp, total only) |
-| Rest/Workload | 3 | 0 |
-| Momentum | 2 | 0 |
-| Bullpen (aggregate) | 3 | 0 |
-| Bullpen availability (game-day) | 4 | 0 |
-| Travel & fatigue | 5 | 0 |
-| Schedule context | 3 | 0 |
-| Lineup composition | 8 | 0 |
+## Dead Ends (Experiments Tried and Discarded)
+- **Residual target Ridge (06d)**: Trained Ridge/Lasso to predict `actual_margin - market_implied_margin`
+  directly (the market's error). Hypothesis was that skipping calibration would be cleaner.
+  Result: predictions collapsed to ~0 (std=0.075 vs actual residual std=4.4). Model correctly
+  learns market errors are unpredictable, so it predicts nothing. Baseline Ridge (06c) with
+  calibration has `corr(edge, residual) = 0.100` vs residual model's 0.013. Calibration
+  *amplifies* weak signal; direct residual prediction *suppresses* it. Script deleted.
+- **F5 NRFI model**: Brier skill score -0.009 (worse than naive base rate). Not viable.
+- **Segmented backtest**: No profitable segments for XGBoost at any threshold.
+- **Handedness splits / pitch-type matchups / interaction features**: 0 survived either Boruta or Lasso.
 
 ## Known Data Quirks
 - **Corrupt consensus H2H**: ~100 games with |ML| < 100 (values 0, -1, -2). Creates
@@ -196,3 +213,7 @@ Pinnacle ROI by season (>= 0.5 runs):
 | 2026-02-23 | Player-level features: batter data (598K), handedness (4K), 20 new features | None survived Boruta |
 | 2026-02-23 | Bullpen availability, travel/fatigue, schedule context, lineup composition | 69 total candidates, 0 baseball features survive |
 | 2026-02-23 | Park factor fix: home/road normalization, umpire factor: park-adjusted | Methodological correctness |
+| 2026-02-24 | Fixed rate stat bug: ERA/FIP/WHIP/K% were never computed (all NaN) | All baseball features now populated |
+| 2026-02-24 | Expanded to 91 candidate features (Statcast velo/command, opponent-adj, handedness, pitch-type, interactions) | More signal candidates |
+| 2026-02-24 | Ridge/Lasso breakthrough: +7.8% ROI at >=1.5 (Lasso, no-market, p=0.005) | Real baseball signal found |
+| 2026-02-24 | Residual target Ridge experiment — tried and discarded (calibration is better) | Dead end documented |
