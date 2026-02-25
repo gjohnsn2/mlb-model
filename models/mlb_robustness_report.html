@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MLB Robustness Experiments</title>
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d;
+    --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
+    --green: #3fb950; --red: #f85149; --yellow: #d29922;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; padding: 24px; max-width: 1200px; margin: 0 auto; }
+  h1 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
+  h2 { font-size: 18px; font-weight: 600; margin: 32px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); color: var(--accent); }
+  h3 { font-size: 15px; font-weight: 600; margin: 20px 0 8px; color: var(--muted); }
+  .subtitle { color: var(--muted); margin-bottom: 24px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+  th { text-align: left; padding: 6px 10px; background: rgba(88,166,255,0.08); border-bottom: 2px solid var(--border); font-weight: 600; color: var(--accent); white-space: nowrap; }
+  td { padding: 5px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  tr:hover td { background: rgba(88,166,255,0.04); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; font-family: 'SF Mono', SFMono-Regular, Consolas, monospace; font-size: 12.5px; }
+  .pos { color: var(--green); }
+  .neg { color: var(--red); }
+  .flat { color: var(--muted); }
+  .note { font-size: 12px; color: var(--muted); margin-top: 8px; font-style: italic; }
+  .highlight-row td { background: rgba(63,185,80,0.06); }
+  .baseline-row td { font-weight: 600; }
+  nav { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; }
+  nav a { color: var(--accent); text-decoration: none; font-size: 13px; margin-right: 16px; }
+  nav a:hover { text-decoration: underline; }
+  .verdict { padding: 12px 16px; margin: 12px 0; border-left: 3px solid var(--accent); background: rgba(88,166,255,0.06); border-radius: 0 4px 4px 0; }
+</style>
+</head>
+<body>
+<h1>MLB Robustness Experiments</h1>
+<p class="subtitle">Lasso no-market OOF predictions &middot; No retraining &middot; Testing structural hypotheses from 2025 diagnostic</p>
+<nav>
+  <a href="#exp1">Exp 1: Dog Filters</a>
+  <a href="#exp2">Exp 2: Rolling Calibration</a>
+</nav>
+
+<h2 id="exp1">Experiment 1: Dog Filters</h2>
+<p>Hypothesis: the model's edge is in identifying underpriced favorites, not picking upsets.</p>
+<h3>Threshold &ge; 0.5 runs</h3>
+<div class="card"><table>
+<thead><tr><th>Filter</th>
+<th class="num">2017-2019</th>
+<th class="num">2021-2024</th>
+<th class="num">2017-2024</th>
+<th class="num">2025</th>
+<th class="num">ALL</th>
+</tr></thead><tbody>
+<tr class="baseline-row"><td>All bets (baseline)</td>
+<td class="num pos">4109b +0.6%</td>
+<td class="num pos">4777b +1.2%</td>
+<td class="num pos">9464b +1.7%</td>
+<td class="num neg">1171b -10.5%</td>
+<td class="num pos">10635b +0.3%</td>
+</tr>
+<tr><td>Favorites only</td>
+<td class="num neg">1430b -4.6%</td>
+<td class="num neg">1681b -0.2%</td>
+<td class="num neg">3296b -1.9%</td>
+<td class="num neg">380b -7.6%</td>
+<td class="num neg">3676b -2.5%</td>
+</tr>
+<tr><td>Dogs only</td>
+<td class="num pos">2679b +3.1%</td>
+<td class="num pos">3096b +1.9%</td>
+<td class="num pos">6168b +3.4%</td>
+<td class="num neg">791b -11.7%</td>
+<td class="num pos">6959b +1.6%</td>
+</tr>
+<tr><td>Dogs implied > 0.40</td>
+<td class="num neg">2849b -3.5%</td>
+<td class="num pos">3262b +1.2%</td>
+<td class="num neg">6470b -0.6%</td>
+<td class="num neg">839b -4.1%</td>
+<td class="num neg">7309b -1.0%</td>
+</tr>
+<tr><td>Dogs implied > 0.35</td>
+<td class="num neg">3571b -2.0%</td>
+<td class="num pos">3932b +0.2%</td>
+<td class="num neg">7966b -0.6%</td>
+<td class="num neg">977b -4.7%</td>
+<td class="num neg">8943b -1.1%</td>
+</tr>
+<tr><td>No longshots (> 0.30)</td>
+<td class="num neg">3924b -1.5%</td>
+<td class="num neg">4305b -0.3%</td>
+<td class="num neg">8752b -0.5%</td>
+<td class="num neg">1065b -7.4%</td>
+<td class="num neg">9817b -1.3%</td>
+</tr>
+</tbody></table></div>
+<h3>Threshold &ge; 1.0 runs</h3>
+<div class="card"><table>
+<thead><tr><th>Filter</th>
+<th class="num">2017-2019</th>
+<th class="num">2021-2024</th>
+<th class="num">2017-2024</th>
+<th class="num">2025</th>
+<th class="num">ALL</th>
+</tr></thead><tbody>
+<tr class="baseline-row"><td>All bets (baseline)</td>
+<td class="num pos">1846b +2.2%</td>
+<td class="num pos">2492b +3.5%</td>
+<td class="num pos">4660b +4.0%</td>
+<td class="num neg">621b -12.0%</td>
+<td class="num pos">5281b +2.1%</td>
+</tr>
+<tr><td>Favorites only</td>
+<td class="num neg">537b -4.3%</td>
+<td class="num pos">749b +5.2%</td>
+<td class="num pos">1374b +1.3%</td>
+<td class="num neg">156b -4.8%</td>
+<td class="num pos">1530b +0.6%</td>
+</tr>
+<tr><td>Dogs only</td>
+<td class="num pos">1309b +4.7%</td>
+<td class="num pos">1743b +2.9%</td>
+<td class="num pos">3286b +5.1%</td>
+<td class="num neg">465b -14.1%</td>
+<td class="num pos">3751b +2.6%</td>
+</tr>
+<tr><td>Dogs implied > 0.40</td>
+<td class="num neg">1140b -3.1%</td>
+<td class="num pos">1472b +5.7%</td>
+<td class="num pos">2783b +2.4%</td>
+<td class="num neg">386b -3.2%</td>
+<td class="num pos">3169b +1.7%</td>
+</tr>
+<tr><td>Dogs implied > 0.35</td>
+<td class="num neg">1520b -2.2%</td>
+<td class="num pos">1846b +2.9%</td>
+<td class="num pos">3600b +0.8%</td>
+<td class="num neg">468b -5.1%</td>
+<td class="num pos">4068b +0.2%</td>
+</tr>
+<tr><td>No longshots (> 0.30)</td>
+<td class="num neg">1727b -1.1%</td>
+<td class="num pos">2087b +2.2%</td>
+<td class="num pos">4089b +1.1%</td>
+<td class="num neg">529b -8.4%</td>
+<td class="num pos">4618b +0.0%</td>
+</tr>
+</tbody></table></div>
+<h3>Threshold &ge; 1.5 runs</h3>
+<div class="card"><table>
+<thead><tr><th>Filter</th>
+<th class="num">2017-2019</th>
+<th class="num">2021-2024</th>
+<th class="num">2017-2024</th>
+<th class="num">2025</th>
+<th class="num">ALL</th>
+</tr></thead><tbody>
+<tr class="baseline-row"><td>All bets (baseline)</td>
+<td class="num pos">645b +10.3%</td>
+<td class="num pos">1251b +7.8%</td>
+<td class="num pos">2053b +10.2%</td>
+<td class="num neg">293b -14.3%</td>
+<td class="num pos">2346b +7.1%</td>
+</tr>
+<tr><td>Favorites only</td>
+<td class="num neg">158b -8.3%</td>
+<td class="num pos">290b +10.5%</td>
+<td class="num pos">479b +3.5%</td>
+<td class="num pos">54b +6.5%</td>
+<td class="num pos">533b +3.8%</td>
+</tr>
+<tr><td>Dogs only</td>
+<td class="num pos">487b +16.0%</td>
+<td class="num pos">961b +7.0%</td>
+<td class="num pos">1574b +12.1%</td>
+<td class="num neg">239b -18.5%</td>
+<td class="num pos">1813b +8.0%</td>
+</tr>
+<tr><td>Dogs implied > 0.40</td>
+<td class="num neg">337b -2.1%</td>
+<td class="num pos">611b +9.9%</td>
+<td class="num pos">1014b +5.8%</td>
+<td class="num pos">143b +0.3%</td>
+<td class="num pos">1157b +5.2%</td>
+</tr>
+<tr><td>Dogs implied > 0.35</td>
+<td class="num neg">483b -2.5%</td>
+<td class="num pos">783b +6.4%</td>
+<td class="num pos">1355b +3.7%</td>
+<td class="num neg">184b -5.4%</td>
+<td class="num pos">1539b +2.6%</td>
+</tr>
+<tr><td>No longshots (> 0.30)</td>
+<td class="num pos">571b +2.0%</td>
+<td class="num pos">906b +6.7%</td>
+<td class="num pos">1590b +5.7%</td>
+<td class="num neg">220b -10.1%</td>
+<td class="num pos">1810b +3.8%</td>
+</tr>
+</tbody></table></div>
+<h3>Threshold &ge; 2.0 runs</h3>
+<div class="card"><table>
+<thead><tr><th>Filter</th>
+<th class="num">2017-2019</th>
+<th class="num">2021-2024</th>
+<th class="num">2017-2024</th>
+<th class="num">2025</th>
+<th class="num">ALL</th>
+</tr></thead><tbody>
+<tr class="baseline-row"><td>All bets (baseline)</td>
+<td class="num pos">203b +20.1%</td>
+<td class="num pos">614b +12.1%</td>
+<td class="num pos">902b +16.3%</td>
+<td class="num neg">146b -19.0%</td>
+<td class="num pos">1048b +11.4%</td>
+</tr>
+<tr><td>Favorites only</td>
+<td class="num neg">37b -17.6%</td>
+<td class="num pos">81b +20.8%</td>
+<td class="num pos">127b +8.0%</td>
+<td class="num pos">16b +15.5%</td>
+<td class="num pos">143b +8.8%</td>
+</tr>
+<tr><td>Dogs only</td>
+<td class="num pos">166b +28.5%</td>
+<td class="num pos">533b +10.8%</td>
+<td class="num pos">775b +17.6%</td>
+<td class="num neg">130b -23.3%</td>
+<td class="num pos">905b +11.8%</td>
+</tr>
+<tr><td>Dogs implied > 0.40</td>
+<td class="num neg">93b -8.3%</td>
+<td class="num pos">191b +10.9%</td>
+<td class="num pos">309b +5.2%</td>
+<td class="num neg">41b -6.8%</td>
+<td class="num pos">350b +3.8%</td>
+</tr>
+<tr><td>Dogs implied > 0.35</td>
+<td class="num neg">136b -6.6%</td>
+<td class="num pos">259b +9.4%</td>
+<td class="num pos">431b +4.8%</td>
+<td class="num neg">65b -17.5%</td>
+<td class="num pos">496b +1.9%</td>
+</tr>
+<tr><td>No longshots (> 0.30)</td>
+<td class="num pos">168b +2.0%</td>
+<td class="num pos">319b +10.7%</td>
+<td class="num pos">534b +8.7%</td>
+<td class="num neg">80b -18.9%</td>
+<td class="num pos">614b +5.1%</td>
+</tr>
+</tbody></table></div>
+<div class="verdict">
+<strong>Reading guide:</strong> Compare each filter row against "All bets (baseline)".
+If "Favorites only" maintains or improves ROI across eras while "Dogs only" is negative,
+the model's edge is fundamentally about favorites. If dogs at higher implied probabilities
+(&gt; 0.35, &gt; 0.40) hold up while longshots don't, a probability floor is warranted.
+</div>
+<h2 id="exp2">Experiment 2: Rolling Calibration</h2>
+<p>Hypothesis: global calibration (mean/std from all 17K+ games) goes stale. A trailing window recalibrates on recent market conditions.</p>
+<h3>Threshold &ge; 0.5 runs</h3>
+<div class="card"><table>
+<thead><tr><th>Calibration</th>
+<th class="num">2017-2019</th>
+<th class="num">2021-2024</th>
+<th class="num">2017-2024</th>
+<th class="num">2025</th>
+<th class="num">ALL</th>
+</tr></thead><tbody>
+<tr class="baseline-row"><td>Global (baseline)</td>
+<td class="num pos">4109b +0.6%</td>
+<td class="num pos">4777b +1.2%</td>
+<td class="num pos">9464b +1.7%</td>
+<td class="num neg">1171b -10.5%</td>
+<td class="num pos">10635b +0.3%</td>
+</tr>
+<tr><td>Trailing 2 seasons</td>
+<td class="num pos">3988b +0.2%</td>
+<td class="num pos">4846b +0.9%</td>
+<td class="num pos">9405b +1.3%</td>
+<td class="num neg">1163b -9.4%</td>
+<td class="num pos">10568b +0.1%</td>
+</tr>
+<tr><td>Trailing 3 seasons</td>
+<td class="num pos">3988b +0.2%</td>
+<td class="num pos">4823b +0.8%</td>
+<td class="num pos">9383b +1.3%</td>
+<td class="num neg">1188b -10.0%</td>
+<td class="num neg">10571b -0.1%</td>
+</tr>
+<tr><td>Trailing 4 seasons</td>
+<td class="num pos">3988b +0.2%</td>
+<td class="num pos">4810b +1.2%</td>
+<td class="num pos">9370b +1.5%</td>
+<td class="num neg">1177b -9.9%</td>
+<td class="num pos">10547b +0.2%</td>
+</tr>
+<tr><td>Expanding (all prior)</td>
+<td class="num pos">3988b +0.2%</td>
+<td class="num pos">4757b +1.3%</td>
+<td class="num pos">9317b +1.5%</td>
+<td class="num neg">1176b -11.3%</td>
+<td class="num pos">10493b +0.0%</td>
+</tr>
+</tbody></table></div>
+<h3>Threshold &ge; 1.0 runs</h3>
+<div class="card"><table>
+<thead><tr><th>Calibration</th>
+<th class="num">2017-2019</th>
+<th class="num">2021-2024</th>
+<th class="num">2017-2024</th>
+<th class="num">2025</th>
+<th class="num">ALL</th>
+</tr></thead><tbody>
+<tr class="baseline-row"><td>Global (baseline)</td>
+<td class="num pos">1846b +2.2%</td>
+<td class="num pos">2492b +3.5%</td>
+<td class="num pos">4660b +4.0%</td>
+<td class="num neg">621b -12.0%</td>
+<td class="num pos">5281b +2.1%</td>
+</tr>
+<tr><td>Trailing 2 seasons</td>
+<td class="num pos">1732b +3.3%</td>
+<td class="num pos">2625b +3.0%</td>
+<td class="num pos">4672b +3.9%</td>
+<td class="num neg">622b -10.1%</td>
+<td class="num pos">5294b +2.2%</td>
+</tr>
+<tr><td>Trailing 3 seasons</td>
+<td class="num pos">1732b +3.3%</td>
+<td class="num pos">2573b +2.8%</td>
+<td class="num pos">4616b +3.9%</td>
+<td class="num neg">644b -10.1%</td>
+<td class="num pos">5260b +2.1%</td>
+</tr>
+<tr><td>Trailing 4 seasons</td>
+<td class="num pos">1732b +3.3%</td>
+<td class="num pos">2525b +3.1%</td>
+<td class="num pos">4568b +4.1%</td>
+<td class="num neg">632b -10.6%</td>
+<td class="num pos">5200b +2.2%</td>
+</tr>
+<tr><td>Expanding (all prior)</td>
+<td class="num pos">1732b +3.3%</td>
+<td class="num pos">2467b +3.0%</td>
+<td class="num pos">4510b +4.0%</td>
+<td class="num neg">633b -12.3%</td>
+<td class="num pos">5143b +2.0%</td>
+</tr>
+</tbody></table></div>
+<h3>Threshold &ge; 1.5 runs</h3>
+<div class="card"><table>
+<thead><tr><th>Calibration</th>
+<th class="num">2017-2019</th>
+<th class="num">2021-2024</th>
+<th class="num">2017-2024</th>
+<th class="num">2025</th>
+<th class="num">ALL</th>
+</tr></thead><tbody>
+<tr class="baseline-row"><td>Global (baseline)</td>
+<td class="num pos">645b +10.3%</td>
+<td class="num pos">1251b +7.8%</td>
+<td class="num pos">2053b +10.2%</td>
+<td class="num neg">293b -14.3%</td>
+<td class="num pos">2346b +7.1%</td>
+</tr>
+<tr><td>Trailing 2 seasons</td>
+<td class="num pos">576b +11.7%</td>
+<td class="num pos">1328b +7.0%</td>
+<td class="num pos">2061b +9.8%</td>
+<td class="num neg">297b -13.2%</td>
+<td class="num pos">2358b +6.8%</td>
+</tr>
+<tr><td>Trailing 3 seasons</td>
+<td class="num pos">576b +11.7%</td>
+<td class="num pos">1298b +6.6%</td>
+<td class="num pos">2026b +9.6%</td>
+<td class="num neg">309b -12.8%</td>
+<td class="num pos">2335b +6.6%</td>
+</tr>
+<tr><td>Trailing 4 seasons</td>
+<td class="num pos">576b +11.7%</td>
+<td class="num pos">1275b +6.5%</td>
+<td class="num pos">2003b +9.7%</td>
+<td class="num neg">296b -13.8%</td>
+<td class="num pos">2299b +6.6%</td>
+</tr>
+<tr><td>Expanding (all prior)</td>
+<td class="num pos">576b +11.7%</td>
+<td class="num pos">1239b +7.4%</td>
+<td class="num pos">1967b +10.3%</td>
+<td class="num neg">291b -14.0%</td>
+<td class="num pos">2258b +7.1%</td>
+</tr>
+</tbody></table></div>
+<h3>Threshold &ge; 2.0 runs</h3>
+<div class="card"><table>
+<thead><tr><th>Calibration</th>
+<th class="num">2017-2019</th>
+<th class="num">2021-2024</th>
+<th class="num">2017-2024</th>
+<th class="num">2025</th>
+<th class="num">ALL</th>
+</tr></thead><tbody>
+<tr class="baseline-row"><td>Global (baseline)</td>
+<td class="num pos">203b +20.1%</td>
+<td class="num pos">614b +12.1%</td>
+<td class="num pos">902b +16.3%</td>
+<td class="num neg">146b -19.0%</td>
+<td class="num pos">1048b +11.4%</td>
+</tr>
+<tr><td>Trailing 2 seasons</td>
+<td class="num pos">171b +26.2%</td>
+<td class="num pos">649b +10.1%</td>
+<td class="num pos">904b +15.5%</td>
+<td class="num neg">150b -17.0%</td>
+<td class="num pos">1054b +10.9%</td>
+</tr>
+<tr><td>Trailing 3 seasons</td>
+<td class="num pos">171b +26.2%</td>
+<td class="num pos">642b +10.4%</td>
+<td class="num pos">893b +15.9%</td>
+<td class="num neg">154b -18.2%</td>
+<td class="num pos">1047b +10.8%</td>
+</tr>
+<tr><td>Trailing 4 seasons</td>
+<td class="num pos">171b +26.2%</td>
+<td class="num pos">634b +11.1%</td>
+<td class="num pos">885b +16.4%</td>
+<td class="num neg">150b -19.6%</td>
+<td class="num pos">1035b +11.2%</td>
+</tr>
+<tr><td>Expanding (all prior)</td>
+<td class="num pos">171b +26.2%</td>
+<td class="num pos">613b +12.2%</td>
+<td class="num pos">864b +17.3%</td>
+<td class="num neg">145b -20.8%</td>
+<td class="num pos">1009b +11.8%</td>
+</tr>
+</tbody></table></div>
+<h3>Edge Distribution by Calibration Method</h3>
+<div class="card"><table>
+<thead><tr><th>Calibration</th><th>Era</th><th class="num">Edge mean</th><th class="num">Edge std</th><th class="num">Home %</th></tr></thead><tbody>
+<tr><td>Global (baseline)</td><td>2017-2024</td><td class="num">+0.0210</td><td class="num">1.0921</td><td class="num">50.2%</td></tr>
+<tr><td>Global (baseline)</td><td style="font-weight:600">2025</td><td class="num">-0.1581</td><td class="num">1.2083</td><td class="num">41.0%</td></tr>
+<tr><td>Trailing 2 seasons</td><td>2017-2024</td><td class="num">-0.0111</td><td class="num">1.0936</td><td class="num">48.9%</td></tr>
+<tr><td>Trailing 2 seasons</td><td style="font-weight:600">2025</td><td class="num">-0.1116</td><td class="num">1.2175</td><td class="num">43.0%</td></tr>
+<tr><td>Trailing 3 seasons</td><td>2017-2024</td><td class="num">-0.0105</td><td class="num">1.0869</td><td class="num">48.9%</td></tr>
+<tr><td>Trailing 3 seasons</td><td style="font-weight:600">2025</td><td class="num">-0.1482</td><td class="num">1.2325</td><td class="num">41.9%</td></tr>
+<tr><td>Trailing 4 seasons</td><td>2017-2024</td><td class="num">-0.0111</td><td class="num">1.0826</td><td class="num">48.8%</td></tr>
+<tr><td>Trailing 4 seasons</td><td style="font-weight:600">2025</td><td class="num">-0.1484</td><td class="num">1.2201</td><td class="num">41.6%</td></tr>
+<tr><td>Expanding (all prior)</td><td>2017-2024</td><td class="num">-0.0101</td><td class="num">1.0758</td><td class="num">48.8%</td></tr>
+<tr><td>Expanding (all prior)</td><td style="font-weight:600">2025</td><td class="num">-0.1768</td><td class="num">1.2078</td><td class="num">40.1%</td></tr>
+</tbody></table></div>
+<div class="verdict">
+<strong>Reading guide:</strong> Compare each rolling window against "Global (baseline)".
+If a trailing window improves 2025 ROI without degrading 2017-2024, calibration drift is real
+and the trailing window should be adopted. Watch the edge mean for 2025 — global shows -0.158
+(systematic away bias). A good rolling window should pull this closer to 0.
+</div>
+<p style="text-align:center;color:var(--muted);margin-top:32px;font-size:12px">Generated from 13_robustness_experiments.py</p>
+</body></html>

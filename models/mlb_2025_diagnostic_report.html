@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MLB 2025 Season Diagnostic</title>
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d;
+    --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
+    --green: #3fb950; --red: #f85149; --yellow: #d29922; --orange: #db6d28;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; padding: 24px; max-width: 1200px; margin: 0 auto; }
+  h1 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
+  h2 { font-size: 18px; font-weight: 600; margin: 32px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); color: var(--accent); }
+  h3 { font-size: 15px; font-weight: 600; margin: 20px 0 8px; color: var(--muted); }
+  .subtitle { color: var(--muted); margin-bottom: 24px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  .finding { padding: 8px 12px; margin: 4px 0; border-left: 3px solid var(--red); background: rgba(248,81,73,0.06); border-radius: 0 4px 4px 0; font-size: 13px; }
+  .finding.warn { border-left-color: var(--yellow); background: rgba(210,153,34,0.06); }
+  .finding .tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 3px; margin-right: 6px; background: rgba(248,81,73,0.15); color: var(--red); }
+  .finding.warn .tag { background: rgba(210,153,34,0.15); color: var(--yellow); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+  th { text-align: left; padding: 6px 10px; background: rgba(88,166,255,0.08); border-bottom: 2px solid var(--border); font-weight: 600; color: var(--accent); white-space: nowrap; }
+  td { padding: 5px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  tr:hover td { background: rgba(88,166,255,0.04); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; font-family: 'SF Mono', SFMono-Regular, Consolas, monospace; font-size: 12.5px; }
+  .pos { color: var(--green); }
+  .neg { color: var(--red); }
+  .flat { color: var(--muted); }
+  .flag { font-size: 11px; font-weight: 600; padding: 1px 5px; border-radius: 3px; margin-left: 4px; }
+  .flag-flip { background: rgba(248,81,73,0.15); color: var(--red); }
+  .flag-drop { background: rgba(210,153,34,0.15); color: var(--yellow); }
+  .flag-sig { background: rgba(248,81,73,0.15); color: var(--red); }
+  .era-header { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .era-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 12px 0; }
+  .era-box { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 12px; text-align: center; }
+  .era-box.highlight { border-color: var(--red); background: rgba(248,81,73,0.04); }
+  .era-box .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .era-box .value { font-size: 22px; font-weight: 700; margin: 4px 0; font-family: 'SF Mono', monospace; }
+  .era-box .detail { font-size: 12px; color: var(--muted); }
+
+  .note { font-size: 12px; color: var(--muted); margin-top: 8px; font-style: italic; }
+  .section-anchor { scroll-margin-top: 20px; }
+
+  nav { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; }
+  nav a { color: var(--accent); text-decoration: none; font-size: 13px; margin-right: 16px; }
+  nav a:hover { text-decoration: underline; }
+  .toc-num { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<h1>MLB 2025 Season Diagnostic</h1>
+<p class="subtitle">Lasso no-market model &middot; Walk-forward 9 folds &middot; RMSE 4.45 &middot; 17,984 calibrated games &middot; Threshold: 1.5 runs</p>
+
+<nav>
+  <a href="#summary"><span class="toc-num">&bull;</span> Summary</a>
+  <a href="#s0"><span class="toc-num">0.</span> MLB Environment</a>
+  <a href="#s1"><span class="toc-num">1.</span> Temporal</a>
+  <a href="#s2"><span class="toc-num">2.</span> Side Bias</a>
+  <a href="#s3"><span class="toc-num">3.</span> Dog/Fav</a>
+  <a href="#s4"><span class="toc-num">4.</span> SP Quality</a>
+  <a href="#s5"><span class="toc-num">5.</span> Feature Dists</a>
+  <a href="#s6"><span class="toc-num">6.</span> Feature Corr</a>
+  <a href="#s7"><span class="toc-num">7.</span> Calibration</a>
+  <a href="#s8"><span class="toc-num">8.</span> Market Structure</a>
+  <a href="#s9"><span class="toc-num">9.</span> Teams</a>
+  <a href="#s10"><span class="toc-num">10.</span> Edge Dist</a>
+</nav>
+
+<!-- ═══ ERA SUMMARY ═══ -->
+<div class="era-grid">
+  <div class="era-box">
+    <div class="label">2017 &ndash; 2019</div>
+    <div class="value pos">+10.3%</div>
+    <div class="detail">645 bets &middot; 297-348 &middot; 46.0% &middot; p=.024</div>
+  </div>
+  <div class="era-box">
+    <div class="label">2021 &ndash; 2024</div>
+    <div class="value pos">+7.8%</div>
+    <div class="detail">1251 bets &middot; 548-703 &middot; 43.8% &middot; p=.032</div>
+  </div>
+  <div class="era-box">
+    <div class="label">2017 &ndash; 2024</div>
+    <div class="value pos">+10.2%</div>
+    <div class="detail">2053 bets &middot; 918-1135 &middot; 44.7% &middot; p=.001</div>
+  </div>
+  <div class="era-box highlight">
+    <div class="label">2025</div>
+    <div class="value neg">-14.3%</div>
+    <div class="detail">293 bets &middot; 109-184 &middot; 37.2% &middot; p=.967</div>
+  </div>
+</div>
+
+<!-- ═══ EXECUTIVE SUMMARY ═══ -->
+<h2 id="summary">Executive Summary &mdash; Key Anomalies</h2>
+<div class="card">
+  <div class="finding"><span class="tag">TEMPORAL</span>Apr 2025 ROI = -27.9% (48 bets)</div>
+  <div class="finding"><span class="tag">TEMPORAL</span>Sep 2025 ROI = -27.2% (52 bets)</div>
+  <div class="finding"><span class="tag">SIDE BIAS</span>Home bets 2025 ROI -1.9% vs prior +12.5% (&Delta;-14.3pp)</div>
+  <div class="finding"><span class="tag">SIDE BIAS</span>Away bets 2025 ROI -21.8% vs prior +7.9% (&Delta;-29.7pp)</div>
+  <div class="finding"><span class="tag">DOG/FAV</span>Dog bets 2025 ROI -18.5% vs prior +12.1% (&Delta;-30.6pp)</div>
+  <div class="finding warn"><span class="tag">DISTRIBUTION</span>star_missing_ops_diff shifted (KS p=0.0007)</div>
+  <div class="finding warn"><span class="tag">CORR FLIP</span>star_missing_ops_diff prior=-0.019 &rarr; 2025=+0.009</div>
+  <div class="finding warn"><span class="tag">CORR FLIP</span>lineup_top_heavy_diff prior=-0.017 &rarr; 2025=+0.015</div>
+  <div class="finding"><span class="tag">TEAM</span>Washington Nationals contributes 39% of 2025 losses ($-4,062)</div>
+</div>
+
+<!-- ═══ 0. MLB ENVIRONMENT ═══ -->
+<h2 id="s0" class="section-anchor">0. MLB Environment &mdash; What Actually Happened on the Field</h2>
+
+<h3>A. Scoring Environment</h3>
+<div class="card">
+<table>
+  <thead><tr><th class="num">Season</th><th class="num">R/game</th><th class="num">HR rate</th><th class="num">K rate</th><th class="num">BB rate</th><th class="num">BA</th><th class="num">Avg total</th><th class="num">Home W%</th></tr></thead>
+  <tbody>
+    <tr><td class="num">2015</td><td class="num">8.50</td><td class="num">0.0297</td><td class="num">0.2266</td><td class="num">0.0851</td><td class="num">0.2537</td><td class="num">8.50</td><td class="num">54.2%</td></tr>
+    <tr><td class="num">2016</td><td class="num">8.94</td><td class="num">0.0338</td><td class="num">0.2362</td><td class="num">0.0911</td><td class="num">0.2536</td><td class="num">8.94</td><td class="num">53.0%</td></tr>
+    <tr><td class="num">2017</td><td class="num">9.28</td><td class="num">0.0367</td><td class="num">0.2428</td><td class="num">0.0956</td><td class="num">0.2541</td><td class="num">9.28</td><td class="num">54.2%</td></tr>
+    <tr><td class="num">2018</td><td class="num">8.88</td><td class="num">0.0338</td><td class="num">0.2497</td><td class="num">0.0949</td><td class="num">0.2473</td><td class="num">8.88</td><td class="num">52.7%</td></tr>
+    <tr><td class="num">2019</td><td class="num">9.65</td><td class="num pos">0.0401</td><td class="num">0.2576</td><td class="num">0.0957</td><td class="num">0.2509</td><td class="num">9.65</td><td class="num">52.8%</td></tr>
+    <tr><td class="num">2020</td><td class="num">9.26</td><td class="num">0.0390</td><td class="num">0.2665</td><td class="num">0.1035</td><td class="num">0.2425</td><td class="num">9.26</td><td class="num">55.0%</td></tr>
+    <tr><td class="num">2021</td><td class="num">9.06</td><td class="num">0.0367</td><td class="num">0.2615</td><td class="num">0.0978</td><td class="num">0.2431</td><td class="num">9.06</td><td class="num">54.1%</td></tr>
+    <tr><td class="num">2022</td><td class="num">8.55</td><td class="num">0.0320</td><td class="num">0.2504</td><td class="num">0.0910</td><td class="num">0.2422</td><td class="num">8.55</td><td class="num">53.4%</td></tr>
+    <tr><td class="num">2023</td><td class="num">9.22</td><td class="num">0.0356</td><td class="num">0.2553</td><td class="num">0.0961</td><td class="num">0.2470</td><td class="num">9.22</td><td class="num">51.8%</td></tr>
+    <tr><td class="num">2024</td><td class="num">8.78</td><td class="num">0.0333</td><td class="num">0.2525</td><td class="num">0.0916</td><td class="num">0.2425</td><td class="num">8.78</td><td class="num">52.1%</td></tr>
+    <tr style="font-weight:600"><td class="num">2025</td><td class="num">8.88</td><td class="num">0.0342</td><td class="num">0.2484</td><td class="num">0.0941</td><td class="num">0.2446</td><td class="num">8.88</td><td class="num">54.4%</td></tr>
+  </tbody>
+</table>
+<p class="note">2025 scoring is unremarkable &mdash; middle of the pack on every metric. Home W% ticked up to 54.4% (highest since 2020), which is interesting given the model's away-side losses.</p>
+</div>
+
+<h3>B. Starting Pitcher Usage</h3>
+<div class="card">
+<table>
+  <thead><tr><th class="num">Season</th><th class="num">Avg SP IP</th><th class="num">SP IP std</th><th class="num">Avg starts</th><th class="num">SP ERA</th><th class="num">SP K%</th><th class="num">SP WHIP</th></tr></thead>
+  <tbody>
+    <tr><td class="num">2015</td><td class="num">5.94</td><td class="num">0.61</td><td class="num">13.2</td><td class="num">3.96</td><td class="num">0.196</td><td class="num">1.274</td></tr>
+    <tr><td class="num">2016</td><td class="num">5.78</td><td class="num">0.64</td><td class="num">13.2</td><td class="num">4.20</td><td class="num">0.205</td><td class="num">1.320</td></tr>
+    <tr><td class="num">2017</td><td class="num">5.66</td><td class="num">0.63</td><td class="num">12.9</td><td class="num">4.29</td><td class="num">0.208</td><td class="num">1.329</td></tr>
+    <tr><td class="num">2018</td><td class="num">5.50</td><td class="num">0.78</td><td class="num">13.1</td><td class="num">4.07</td><td class="num">0.220</td><td class="num">1.277</td></tr>
+    <tr><td class="num">2019</td><td class="num">5.37</td><td class="num">0.87</td><td class="num">13.1</td><td class="num">4.26</td><td class="num">0.226</td><td class="num">1.284</td></tr>
+    <tr><td class="num">2020</td><td class="num">4.97</td><td class="num">0.97</td><td class="num">5.7</td><td class="num">4.25</td><td class="num">0.233</td><td class="num">1.270</td></tr>
+    <tr><td class="num">2021</td><td class="num">5.16</td><td class="num">0.81</td><td class="num">12.4</td><td class="num">4.17</td><td class="num">0.232</td><td class="num">1.264</td></tr>
+    <tr><td class="num">2022</td><td class="num">5.22</td><td class="num">0.78</td><td class="num">12.7</td><td class="num">3.92</td><td class="num">0.218</td><td class="num">1.258</td></tr>
+    <tr><td class="num">2023</td><td class="num">5.29</td><td class="num">0.78</td><td class="num">12.5</td><td class="num">4.33</td><td class="num">0.224</td><td class="num">1.303</td></tr>
+    <tr><td class="num">2024</td><td class="num">5.34</td><td class="num">0.73</td><td class="num">12.7</td><td class="num">4.02</td><td class="num">0.223</td><td class="num">1.256</td></tr>
+    <tr style="font-weight:600"><td class="num">2025</td><td class="num">5.32</td><td class="num">0.67</td><td class="num">12.7</td><td class="num">4.01</td><td class="num">0.220</td><td class="num">1.264</td></tr>
+  </tbody>
+</table>
+<p class="note">SP usage has stabilized after the 2015-2020 decline. 2025 SP IP std (0.67) is the lowest since 2017 &mdash; starters are slightly more uniform in workload, possibly compressing the sp_season_ip_diff signal.</p>
+</div>
+
+<h3>C. Bullpen Environment</h3>
+<div class="card">
+<table>
+  <thead><tr><th class="num">Season</th><th class="num">BP ERA</th><th class="num">BP WHIP</th><th class="num">BP usage</th></tr></thead>
+  <tbody>
+    <tr><td class="num">2017</td><td class="num">4.13</td><td class="num">1.321</td><td class="num">3.43</td></tr>
+    <tr><td class="num">2018</td><td class="num">4.09</td><td class="num">1.328</td><td class="num">3.62</td></tr>
+    <tr><td class="num">2019</td><td class="num">4.50</td><td class="num">1.365</td><td class="num">3.80</td></tr>
+    <tr><td class="num">2020</td><td class="num">4.40</td><td class="num">1.359</td><td class="num">3.98</td></tr>
+    <tr><td class="num">2021</td><td class="num">4.18</td><td class="num">1.319</td><td class="num">3.82</td></tr>
+    <tr><td class="num">2022</td><td class="num">3.88</td><td class="num">1.276</td><td class="num">3.71</td></tr>
+    <tr><td class="num">2023</td><td class="num">4.13</td><td class="num">1.319</td><td class="num">3.77</td></tr>
+    <tr><td class="num">2024</td><td class="num">3.98</td><td class="num">1.276</td><td class="num">3.71</td></tr>
+    <tr style="font-weight:600"><td class="num">2025</td><td class="num">4.09</td><td class="num">1.313</td><td class="num">3.72</td></tr>
+  </tbody>
+</table>
+<p class="note">Bullpen ERA/WHIP ticked slightly worse vs 2024 but nothing dramatic. Usage flat.</p>
+</div>
+
+<h3>D. Lineup Composition</h3>
+<div class="card">
+<table>
+  <thead><tr><th class="num">Season</th><th class="num">OPS</th><th class="num">Power</th><th class="num">K rate</th><th class="num">BB/K</th><th class="num">Top-heavy</th><th class="num">Continuity</th></tr></thead>
+  <tbody>
+    <tr><td class="num">2017</td><td class="num">0.737</td><td class="num">0.1623</td><td class="num">0.2187</td><td class="num">0.472</td><td class="num">0.092</td><td class="num">0.71</td></tr>
+    <tr><td class="num">2018</td><td class="num">0.715</td><td class="num">0.1542</td><td class="num">0.2269</td><td class="num">0.451</td><td class="num">0.107</td><td class="num">0.70</td></tr>
+    <tr><td class="num">2019</td><td class="num">0.740</td><td class="num">0.1721</td><td class="num">0.2334</td><td class="num">0.438</td><td class="num">0.108</td><td class="num">0.71</td></tr>
+    <tr><td class="num">2020</td><td class="num">0.732</td><td class="num">0.1693</td><td class="num">0.2373</td><td class="num">0.445</td><td class="num">0.106</td><td class="num">0.75</td></tr>
+    <tr><td class="num">2021</td><td class="num">0.714</td><td class="num">0.1608</td><td class="num">0.2378</td><td class="num">0.437</td><td class="num">0.121</td><td class="num">0.71</td></tr>
+    <tr><td class="num">2022</td><td class="num">0.702</td><td class="num">0.1487</td><td class="num">0.2265</td><td class="num">0.432</td><td class="num">0.102</td><td class="num">0.76</td></tr>
+    <tr><td class="num">2023</td><td class="num">0.719</td><td class="num">0.1573</td><td class="num">0.2309</td><td class="num">0.432</td><td class="num">0.094</td><td class="num">0.76</td></tr>
+    <tr><td class="num">2024</td><td class="num">0.703</td><td class="num">0.1502</td><td class="num">0.2292</td><td class="num">0.418</td><td class="num">0.101</td><td class="num">0.77</td></tr>
+    <tr style="font-weight:600"><td class="num">2025</td><td class="num">0.706</td><td class="num">0.1511</td><td class="num">0.2260</td><td class="num">0.445</td><td class="num">0.105</td><td class="num">0.77</td></tr>
+  </tbody>
+</table>
+<p class="note">BB/K ratio jumped from 0.418 (2024) to 0.445 (2025) &mdash; best plate discipline since 2020. K rate dropped to lowest since 2018. Continuity stayed at the recent high of 0.77 (less lineup shuffling).</p>
+</div>
+
+<h3>E. Upset Rate &amp; Parity</h3>
+<div class="card">
+<table>
+  <thead><tr><th class="num">Season</th><th class="num">Games</th><th class="num">Dog wins</th><th class="num">Dog W%</th><th class="num">Avg |margin|</th><th class="num">1-run %</th><th class="num">Blowout 5+%</th></tr></thead>
+  <tbody>
+    <tr><td class="num">2017</td><td class="num">2466</td><td class="num">1012</td><td class="num">42.6%</td><td class="num">3.66</td><td class="num">26.6%</td><td class="num">30.0%</td></tr>
+    <tr><td class="num">2018</td><td class="num">2461</td><td class="num">1029</td><td class="num">41.8%</td><td class="num">3.53</td><td class="num">27.5%</td><td class="num">27.8%</td></tr>
+    <tr><td class="num">2019</td><td class="num">2460</td><td class="num">989</td><td class="num">40.3%</td><td class="num">3.67</td><td class="num">26.6%</td><td class="num">29.9%</td></tr>
+    <tr><td class="num">2020</td><td class="num">951</td><td class="num">349</td><td class="num">37.5%</td><td class="num">3.64</td><td class="num">27.2%</td><td class="num">28.9%</td></tr>
+    <tr><td class="num">2021</td><td class="num">2467</td><td class="num">981</td><td class="num">39.8%</td><td class="num">3.54</td><td class="num">28.2%</td><td class="num">28.0%</td></tr>
+    <tr><td class="num">2022</td><td class="num">2462</td><td class="num">666</td><td class="num neg">36.9%</td><td class="num">3.45</td><td class="num">29.0%</td><td class="num">26.6%</td></tr>
+    <tr><td class="num">2023</td><td class="num">2474</td><td class="num">780</td><td class="num">41.4%</td><td class="num">3.56</td><td class="num">27.6%</td><td class="num">27.4%</td></tr>
+    <tr><td class="num">2024</td><td class="num">2471</td><td class="num">808</td><td class="num">42.1%</td><td class="num">3.52</td><td class="num">27.6%</td><td class="num">28.7%</td></tr>
+    <tr style="font-weight:600"><td class="num">2025</td><td class="num">2476</td><td class="num">783</td><td class="num">40.1%</td><td class="num">3.58</td><td class="num">29.4%</td><td class="num">28.7%</td></tr>
+  </tbody>
+</table>
+<p class="note">Dog W% at 40.1% is middling &mdash; not a historically bad year for upsets league-wide. But 1-run game % (29.4%) is the highest in the dataset, suggesting more coin-flip outcomes that hurt any model betting dogs at plus-money. The model's dog bets went 31% vs a league-wide dog rate of 40% &mdash; the model specifically <em>picked the wrong dogs</em>.</p>
+</div>
+
+<h3>F. Game Context</h3>
+<div class="card">
+<table>
+  <thead><tr><th class="num">Season</th><th class="num">Dome %</th><th class="num">Avg temp</th><th class="num">DH games</th><th class="num">Postseason</th></tr></thead>
+  <tbody>
+    <tr><td class="num">2017</td><td class="num">18.7%</td><td class="num">73.6&deg;F</td><td class="num">59</td><td class="num">38</td></tr>
+    <tr><td class="num">2018</td><td class="num">15.4%</td><td class="num">73.3&deg;F</td><td class="num">58</td><td class="num">33</td></tr>
+    <tr><td class="num">2019</td><td class="num">14.7%</td><td class="num">73.3&deg;F</td><td class="num">58</td><td class="num">37</td></tr>
+    <tr><td class="num">2020</td><td class="num">15.4%</td><td class="num">77.3&deg;F</td><td class="num">12</td><td class="num">53</td></tr>
+    <tr><td class="num">2021</td><td class="num">14.6%</td><td class="num">73.3&deg;F</td><td class="num">35</td><td class="num">37</td></tr>
+    <tr><td class="num">2022</td><td class="num">13.7%</td><td class="num">73.4&deg;F</td><td class="num">68</td><td class="num">40</td></tr>
+    <tr><td class="num">2023</td><td class="num">15.4%</td><td class="num">72.4&deg;F</td><td class="num">65</td><td class="num">41</td></tr>
+    <tr><td class="num">2024</td><td class="num">16.3%</td><td class="num">73.4&deg;F</td><td class="num">153</td><td class="num">43</td></tr>
+    <tr style="font-weight:600"><td class="num">2025</td><td class="num">16.8%</td><td class="num">73.5&deg;F</td><td class="num">119</td><td class="num">47</td></tr>
+  </tbody>
+</table>
+<p class="note">Nothing unusual. DH games dropped from 2024's high of 153 but still elevated vs pre-2024.</p>
+</div>
+
+<!-- ═══ 1. TEMPORAL ═══ -->
+<h2 id="s1" class="section-anchor">1. Temporal (Monthly) Breakdown</h2>
+
+<h3>Threshold &ge; 1.5 runs (primary)</h3>
+<div class="card">
+<table>
+  <thead><tr><th>Month</th><th class="num">2017-19 Bets</th><th class="num">ROI</th><th class="num">Win%</th><th class="num">2021-24 Bets</th><th class="num">ROI</th><th class="num">Win%</th><th class="num">2025 Bets</th><th class="num">ROI</th><th class="num">Win%</th></tr></thead>
+  <tbody>
+    <tr><td>Mar</td><td class="num">13</td><td class="num pos">+60.0%</td><td class="num">62%</td><td class="num">5</td><td class="num neg">-100.0%</td><td class="num">0%</td><td class="num">6</td><td class="num neg">-73.3%</td><td class="num">17%</td></tr>
+    <tr><td>Apr</td><td class="num">132</td><td class="num neg">-3.7%</td><td class="num">41%</td><td class="num">211</td><td class="num pos">+9.3%</td><td class="num">44%</td><td class="num">48</td><td class="num neg">-27.9%</td><td class="num">29%</td></tr>
+    <tr><td>May</td><td class="num">99</td><td class="num pos">+8.3%</td><td class="num">49%</td><td class="num">188</td><td class="num pos">+5.0%</td><td class="num">41%</td><td class="num">39</td><td class="num neg">-5.7%</td><td class="num">36%</td></tr>
+    <tr><td>Jun</td><td class="num">104</td><td class="num pos">+5.0%</td><td class="num">46%</td><td class="num">160</td><td class="num pos">+15.2%</td><td class="num">46%</td><td class="num">47</td><td class="num neg">-4.6%</td><td class="num">40%</td></tr>
+    <tr><td>Jul</td><td class="num">78</td><td class="num pos">+16.4%</td><td class="num">46%</td><td class="num">194</td><td class="num pos">+16.4%</td><td class="num">46%</td><td class="num">41</td><td class="num pos">+32.0%</td><td class="num">54%</td></tr>
+    <tr><td>Aug</td><td class="num">92</td><td class="num pos">+30.2%</td><td class="num">51%</td><td class="num">216</td><td class="num pos">+5.3%</td><td class="num">41%</td><td class="num">54</td><td class="num neg">-20.6%</td><td class="num">37%</td></tr>
+    <tr><td>Sep</td><td class="num">117</td><td class="num pos">+9.9%</td><td class="num">44%</td><td class="num">230</td><td class="num pos">+7.5%</td><td class="num">48%</td><td class="num">52</td><td class="num neg">-27.2%</td><td class="num">37%</td></tr>
+    <tr><td>Oct</td><td class="num">10</td><td class="num neg">-20.6%</td><td class="num">40%</td><td class="num">46</td><td class="num neg">-26.8%</td><td class="num">37%</td><td class="num">6</td><td class="num neg">-100.0%</td><td class="num">0%</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>corr(pred, actual) by month</h3>
+<div class="card">
+<table>
+  <thead><tr><th>Month</th><th class="num">Prior (2017-24)</th><th class="num">2025</th></tr></thead>
+  <tbody>
+    <tr><td>Mar</td><td class="num">+0.243</td><td class="num neg">+0.011</td></tr>
+    <tr><td>Apr</td><td class="num">+0.122</td><td class="num">+0.100</td></tr>
+    <tr><td>May</td><td class="num">+0.157</td><td class="num">+0.115</td></tr>
+    <tr><td>Jun</td><td class="num">+0.197</td><td class="num">+0.140</td></tr>
+    <tr><td>Jul</td><td class="num">+0.175</td><td class="num neg">+0.002</td></tr>
+    <tr><td>Aug</td><td class="num">+0.211</td><td class="num">+0.199</td></tr>
+    <tr><td>Sep</td><td class="num">+0.210</td><td class="num">+0.195</td></tr>
+    <tr><td>Oct</td><td class="num">+0.100</td><td class="num neg">+0.002</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ═══ 2. SIDE BIAS ═══ -->
+<h2 id="s2" class="section-anchor">2. Side Bias (Home vs Away)</h2>
+<div class="card">
+  <p style="margin-bottom:12px"><strong>Edge balance (all games):</strong>
+    2017-19: 51.4% home &middot;
+    2021-24: 48.7% home &middot;
+    <span class="neg">2025: 41.0% home (mean edge -0.158)</span></p>
+
+<h3>Threshold &ge; 1.5 runs</h3>
+<table>
+  <thead><tr><th>Side</th><th class="num">2017-19 Bets</th><th class="num">ROI</th><th class="num">Win%</th><th class="num">2021-24 Bets</th><th class="num">ROI</th><th class="num">Win%</th><th class="num">2025 Bets</th><th class="num">ROI</th><th class="num">Win%</th></tr></thead>
+  <tbody>
+    <tr><td>Home</td><td class="num">350</td><td class="num pos">+15.0%</td><td class="num">51%</td><td class="num">611</td><td class="num pos">+9.9%</td><td class="num">46%</td><td class="num">107</td><td class="num neg">-1.9%</td><td class="num">41%</td></tr>
+    <tr><td>Away</td><td class="num">295</td><td class="num pos">+4.6%</td><td class="num">41%</td><td class="num">640</td><td class="num pos">+5.7%</td><td class="num">42%</td><td class="num">186</td><td class="num neg">-21.8%</td><td class="num">35%</td></tr>
+  </tbody>
+</table>
+
+<h3>All thresholds</h3>
+<table>
+  <thead><tr><th>Threshold</th><th>Side</th><th class="num">2017-19</th><th class="num">2021-24</th><th class="num">2025</th></tr></thead>
+  <tbody>
+    <tr><td>&ge; 0.5</td><td>Home</td><td class="num pos">+0.7%</td><td class="num pos">+3.4%</td><td class="num neg">-0.3%</td></tr>
+    <tr><td>&ge; 0.5</td><td>Away</td><td class="num pos">+0.4%</td><td class="num neg">-0.8%</td><td class="num neg">-17.1%</td></tr>
+    <tr><td>&ge; 1.0</td><td>Home</td><td class="num pos">+3.7%</td><td class="num pos">+6.8%</td><td class="num pos">+0.3%</td></tr>
+    <tr><td>&ge; 1.0</td><td>Away</td><td class="num pos">+0.5%</td><td class="num pos">+0.5%</td><td class="num neg">-19.5%</td></tr>
+    <tr><td>&ge; 2.0</td><td>Home</td><td class="num pos">+26.0%</td><td class="num pos">+15.1%</td><td class="num neg">-7.9%</td></tr>
+    <tr><td>&ge; 2.0</td><td>Away</td><td class="num pos">+13.2%</td><td class="num pos">+9.0%</td><td class="num neg">-27.4%</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ═══ 3. DOG vs FAV ═══ -->
+<h2 id="s3" class="section-anchor">3. Dog vs Favorite</h2>
+<div class="card">
+<h3>Threshold &ge; 1.5 runs</h3>
+<table>
+  <thead><tr><th>Type</th><th class="num">2017-19 Bets</th><th class="num">ROI</th><th class="num">Win%</th><th class="num">2021-24 Bets</th><th class="num">ROI</th><th class="num">Win%</th><th class="num">2025 Bets</th><th class="num">ROI</th><th class="num">Win%</th></tr></thead>
+  <tbody>
+    <tr><td>Dog</td><td class="num">487</td><td class="num pos">+16.0%</td><td class="num">43%</td><td class="num">961</td><td class="num pos">+7.0%</td><td class="num">37%</td><td class="num">239</td><td class="num neg">-18.5%</td><td class="num">31%</td></tr>
+    <tr><td>Favorite</td><td class="num">158</td><td class="num neg">-8.3%</td><td class="num">56%</td><td class="num">290</td><td class="num pos">+10.5%</td><td class="num">65%</td><td class="num">54</td><td class="num pos">+6.5%</td><td class="num">63%</td></tr>
+  </tbody>
+</table>
+<p class="note">Mean implied prob of dog bets (&ge;1.5): 2017-19: 0.377 &middot; 2021-24: 0.337 &middot; 2025: 0.346 &mdash; dogs are similar length, not longer shots</p>
+
+<h3>All thresholds</h3>
+<table>
+  <thead><tr><th>Threshold</th><th>Type</th><th class="num">2017-19</th><th class="num">2021-24</th><th class="num">2025</th></tr></thead>
+  <tbody>
+    <tr><td>&ge; 0.5</td><td>Dog</td><td class="num pos">+3.1%</td><td class="num pos">+1.9%</td><td class="num neg">-11.7%</td></tr>
+    <tr><td>&ge; 0.5</td><td>Fav</td><td class="num neg">-4.6%</td><td class="num neg">-0.2%</td><td class="num neg">-7.6%</td></tr>
+    <tr><td>&ge; 1.0</td><td>Dog</td><td class="num pos">+4.7%</td><td class="num pos">+2.9%</td><td class="num neg">-14.1%</td></tr>
+    <tr><td>&ge; 1.0</td><td>Fav</td><td class="num neg">-4.3%</td><td class="num pos">+5.2%</td><td class="num neg">-4.8%</td></tr>
+    <tr><td>&ge; 2.0</td><td>Dog</td><td class="num pos">+28.5%</td><td class="num pos">+10.8%</td><td class="num neg">-23.3%</td></tr>
+    <tr><td>&ge; 2.0</td><td>Fav</td><td class="num neg">-17.6%</td><td class="num pos">+20.8%</td><td class="num pos">+15.5%</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ═══ 4. SP QUALITY ═══ -->
+<h2 id="s4" class="section-anchor">4. SP Quality Mismatch</h2>
+<div class="card">
+<h3>|sp_season_ip_diff| quartiles &mdash; Threshold &ge; 1.5</h3>
+<table>
+  <thead><tr><th>Quartile</th><th class="num">2017-19 Bets</th><th class="num">ROI</th><th class="num">2021-24 Bets</th><th class="num">ROI</th><th class="num">2025 Bets</th><th class="num">ROI</th></tr></thead>
+  <tbody>
+    <tr><td>Q1 (close SPs)</td><td class="num">165</td><td class="num pos">+9.0%</td><td class="num">255</td><td class="num pos">+5.1%</td><td class="num">60</td><td class="num neg">-26.4%</td></tr>
+    <tr><td>Q2</td><td class="num">130</td><td class="num pos">+10.4%</td><td class="num">247</td><td class="num pos">+20.2%</td><td class="num">61</td><td class="num neg">-6.3%</td></tr>
+    <tr><td>Q3</td><td class="num">158</td><td class="num pos">+9.9%</td><td class="num">288</td><td class="num pos">+7.7%</td><td class="num">56</td><td class="num neg">-2.0%</td></tr>
+    <tr><td>Q4 (big mismatch)</td><td class="num">158</td><td class="num pos">+14.3%</td><td class="num">406</td><td class="num pos">+3.1%</td><td class="num">101</td><td class="num neg">-20.4%</td></tr>
+  </tbody>
+</table>
+
+<h3>Signed direction &mdash; Threshold &ge; 1.5</h3>
+<table>
+  <thead><tr><th>Direction</th><th class="num">2017-19 Bets</th><th class="num">ROI</th><th class="num">2021-24 Bets</th><th class="num">ROI</th><th class="num">2025 Bets</th><th class="num">ROI</th></tr></thead>
+  <tbody>
+    <tr><td>Home SP better</td><td class="num">283</td><td class="num pos">+9.0%</td><td class="num">550</td><td class="num pos">+10.1%</td><td class="num">121</td><td class="num neg">-1.9%</td></tr>
+    <tr><td>Away SP better</td><td class="num">298</td><td class="num pos">+13.6%</td><td class="num">603</td><td class="num pos">+5.4%</td><td class="num">149</td><td class="num neg">-21.7%</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ═══ 5. FEATURE DISTRIBUTIONS ═══ -->
+<h2 id="s5" class="section-anchor">5. Feature Distribution Shifts</h2>
+<div class="card">
+<table>
+  <thead><tr><th>Feature</th><th>Era</th><th class="num">Mean</th><th class="num">Std</th><th class="num">NaN%</th><th class="num">KS stat</th><th class="num">KS p</th><th></th></tr></thead>
+  <tbody>
+    <tr><td rowspan="4">sp_season_ip_diff</td><td class="era-header">2017-19</td><td class="num">-0.521</td><td class="num">51.785</td><td class="num">3.9%</td><td class="num">0.0122</td><td class="num">0.465</td><td></td></tr>
+    <tr><td class="era-header">2021-24</td><td class="num">+0.286</td><td class="num">50.465</td><td class="num">3.8%</td><td class="num">0.0107</td><td class="num">0.598</td><td></td></tr>
+    <tr><td class="era-header">2017-24</td><td class="num flat">-0.084</td><td class="num flat">49.867</td><td class="num flat">4.0%</td><td class="num flat" colspan="2">reference</td><td></td></tr>
+    <tr><td class="era-header"><strong>2025</strong></td><td class="num">+1.006</td><td class="num">51.733</td><td class="num">3.5%</td><td class="num">0.0255</td><td class="num">0.231</td><td></td></tr>
+
+    <tr><td rowspan="4">team_run_diff_10_diff</td><td class="era-header">2017-19</td><td class="num">-0.049</td><td class="num">2.480</td><td class="num">0.0%</td><td class="num">0.0101</td><td class="num">0.685</td><td></td></tr>
+    <tr><td class="era-header">2021-24</td><td class="num">-0.027</td><td class="num">2.428</td><td class="num">0.0%</td><td class="num">0.0066</td><td class="num">0.973</td><td></td></tr>
+    <tr><td class="era-header">2017-24</td><td class="num flat">-0.029</td><td class="num flat">2.451</td><td class="num flat">0.0%</td><td class="num flat" colspan="2">reference</td><td></td></tr>
+    <tr><td class="era-header"><strong>2025</strong></td><td class="num">+0.039</td><td class="num">2.554</td><td class="num">0.0%</td><td class="num">0.0346</td><td class="num">0.033</td><td></td></tr>
+
+    <tr><td rowspan="4">star_missing_ops_diff</td><td class="era-header">2017-19</td><td class="num">-0.009</td><td class="num">1.035</td><td class="num">0.0%</td><td class="num">0.0308</td><td class="num neg">0.0001</td><td><span class="flag flag-sig">***</span></td></tr>
+    <tr><td class="era-header">2021-24</td><td class="num">-0.009</td><td class="num">0.954</td><td class="num">0.0%</td><td class="num">0.0281</td><td class="num neg">0.0005</td><td><span class="flag flag-sig">***</span></td></tr>
+    <tr><td class="era-header">2017-24</td><td class="num flat">-0.010</td><td class="num flat">0.994</td><td class="num flat">0.0%</td><td class="num flat" colspan="2">reference</td><td></td></tr>
+    <tr><td class="era-header"><strong>2025</strong></td><td class="num">-0.036</td><td class="num">0.926</td><td class="num">0.0%</td><td class="num">0.0484</td><td class="num neg">0.0007</td><td><span class="flag flag-sig">***</span></td></tr>
+
+    <tr><td rowspan="4">lineup_bb_k_ratio_diff</td><td class="era-header">2017-19</td><td class="num">-0.001</td><td class="num">0.204</td><td class="num">0.0%</td><td class="num">0.0223</td><td class="num">0.014</td><td></td></tr>
+    <tr><td class="era-header">2021-24</td><td class="num">-0.001</td><td class="num">0.168</td><td class="num">0.0%</td><td class="num">0.0186</td><td class="num">0.051</td><td></td></tr>
+    <tr><td class="era-header">2017-24</td><td class="num flat">-0.001</td><td class="num flat">0.185</td><td class="num flat">0.0%</td><td class="num flat" colspan="2">reference</td><td></td></tr>
+    <tr><td class="era-header"><strong>2025</strong></td><td class="num">-0.002</td><td class="num">0.161</td><td class="num">0.0%</td><td class="num">0.0304</td><td class="num">0.084</td><td></td></tr>
+
+    <tr><td rowspan="4">bb_rate_diff</td><td class="era-header">2017-19</td><td class="num">-0.001</td><td class="num">0.032</td><td class="num">0.0%</td><td class="num">0.0063</td><td class="num">0.988</td><td></td></tr>
+    <tr><td class="era-header">2021-24</td><td class="num">-0.001</td><td class="num">0.032</td><td class="num">0.0%</td><td class="num">0.0108</td><td class="num">0.566</td><td></td></tr>
+    <tr><td class="era-header">2017-24</td><td class="num flat">-0.001</td><td class="num flat">0.032</td><td class="num flat">0.0%</td><td class="num flat" colspan="2">reference</td><td></td></tr>
+    <tr><td class="era-header"><strong>2025</strong></td><td class="num">-0.000</td><td class="num">0.029</td><td class="num">0.0%</td><td class="num">0.0387</td><td class="num">0.012</td><td></td></tr>
+
+    <tr><td rowspan="4">sp_k_pct_diff</td><td class="era-header">2017-19</td><td class="num">-0.002</td><td class="num">0.081</td><td class="num">19.6%</td><td class="num">0.0132</td><td class="num">0.486</td><td></td></tr>
+    <tr><td class="era-header">2021-24</td><td class="num">+0.000</td><td class="num">0.080</td><td class="num">20.3%</td><td class="num">0.0137</td><td class="num">0.403</td><td></td></tr>
+    <tr><td class="era-header">2017-24</td><td class="num flat">-0.001</td><td class="num flat">0.081</td><td class="num flat">21.1%</td><td class="num flat" colspan="2">reference</td><td></td></tr>
+    <tr><td class="era-header"><strong>2025</strong></td><td class="num">-0.002</td><td class="num">0.076</td><td class="num">20.5%</td><td class="num">0.0228</td><td class="num">0.476</td><td></td></tr>
+
+    <tr><td rowspan="4">lineup_power_diff</td><td class="era-header">2017-19</td><td class="num">-0.000</td><td class="num">0.049</td><td class="num">0.0%</td><td class="num">0.0186</td><td class="num">0.062</td><td></td></tr>
+    <tr><td class="era-header">2021-24</td><td class="num">+0.001</td><td class="num">0.045</td><td class="num">0.0%</td><td class="num">0.0180</td><td class="num">0.063</td><td></td></tr>
+    <tr><td class="era-header">2017-24</td><td class="num flat">+0.000</td><td class="num flat">0.047</td><td class="num flat">0.0%</td><td class="num flat" colspan="2">reference</td><td></td></tr>
+    <tr><td class="era-header"><strong>2025</strong></td><td class="num">-0.000</td><td class="num">0.044</td><td class="num">0.0%</td><td class="num">0.0240</td><td class="num">0.273</td><td></td></tr>
+
+    <tr><td rowspan="4">bullpen_whip_diff</td><td class="era-header">2017-19</td><td class="num">+0.007</td><td class="num">0.375</td><td class="num">0.0%</td><td class="num">0.0102</td><td class="num">0.665</td><td></td></tr>
+    <tr><td class="era-header">2021-24</td><td class="num">+0.005</td><td class="num">0.351</td><td class="num">0.0%</td><td class="num">0.0102</td><td class="num">0.638</td><td></td></tr>
+    <tr><td class="era-header">2017-24</td><td class="num flat">+0.005</td><td class="num flat">0.364</td><td class="num flat">0.0%</td><td class="num flat" colspan="2">reference</td><td></td></tr>
+    <tr><td class="era-header"><strong>2025</strong></td><td class="num">+0.008</td><td class="num">0.363</td><td class="num">0.0%</td><td class="num">0.0244</td><td class="num">0.260</td><td></td></tr>
+
+    <tr><td rowspan="4">lineup_top_heavy_diff</td><td class="era-header">2017-19</td><td class="num">+0.002</td><td class="num">0.197</td><td class="num">3.3%</td><td class="num">0.0160</td><td class="num">0.165</td><td></td></tr>
+    <tr><td class="era-header">2021-24</td><td class="num">+0.002</td><td class="num">0.168</td><td class="num">0.9%</td><td class="num">0.0138</td><td class="num">0.270</td><td></td></tr>
+    <tr><td class="era-header">2017-24</td><td class="num flat">+0.001</td><td class="num flat">0.181</td><td class="num flat">1.9%</td><td class="num flat" colspan="2">reference</td><td></td></tr>
+    <tr><td class="era-header"><strong>2025</strong></td><td class="num">-0.000</td><td class="num">0.168</td><td class="num">0.0%</td><td class="num">0.0145</td><td class="num">0.863</td><td></td></tr>
+  </tbody>
+</table>
+<p class="note">*** = KS p &lt; 0.01 (significant distribution shift vs 2017-2024). star_missing_ops_diff is the only feature with a significant shift.</p>
+</div>
+
+<!-- ═══ 6. FEATURE EDGE CORRELATION ═══ -->
+<h2 id="s6" class="section-anchor">6. Per-Feature Edge Correlation</h2>
+<div class="card">
+<p style="margin-bottom:12px">corr(feature, market_residual) &mdash; features where the relationship to outcomes changed</p>
+<table>
+  <thead><tr><th>Feature</th><th class="num">2017-19</th><th class="num">2021-24</th><th class="num">2017-24</th><th class="num">2025</th><th class="num">&Delta; vs prior</th><th></th></tr></thead>
+  <tbody>
+    <tr><td>sp_season_ip_diff</td><td class="num">+0.019</td><td class="num">+0.018</td><td class="num">+0.017</td><td class="num">+0.004</td><td class="num neg">-0.014</td><td><span class="flag flag-drop">DROP</span></td></tr>
+    <tr><td>team_run_diff_10_diff</td><td class="num">+0.000</td><td class="num">-0.012</td><td class="num">-0.010</td><td class="num">+0.009</td><td class="num neg">+0.019</td><td><span class="flag flag-flip">FLIP</span></td></tr>
+    <tr><td>star_missing_ops_diff</td><td class="num">-0.013</td><td class="num">-0.022</td><td class="num">-0.019</td><td class="num">+0.009</td><td class="num neg">+0.028</td><td><span class="flag flag-flip">FLIP</span></td></tr>
+    <tr><td>lineup_bb_k_ratio_diff</td><td class="num">+0.008</td><td class="num">+0.006</td><td class="num">+0.006</td><td class="num pos">+0.018</td><td class="num pos">+0.012</td><td></td></tr>
+    <tr><td>bb_rate_diff</td><td class="num">+0.012</td><td class="num">+0.011</td><td class="num">+0.008</td><td class="num">-0.021</td><td class="num neg">-0.029</td><td><span class="flag flag-flip">FLIP</span></td></tr>
+    <tr><td>sp_k_pct_diff</td><td class="num">-0.009</td><td class="num">+0.014</td><td class="num">+0.004</td><td class="num">-0.018</td><td class="num neg">-0.021</td><td><span class="flag flag-flip">FLIP</span></td></tr>
+    <tr><td>lineup_power_diff</td><td class="num">+0.008</td><td class="num">-0.015</td><td class="num">-0.003</td><td class="num neg">-0.047</td><td class="num neg">-0.045</td><td></td></tr>
+    <tr><td>bullpen_whip_diff</td><td class="num">+0.003</td><td class="num">-0.004</td><td class="num">-0.003</td><td class="num neg">-0.045</td><td class="num neg">-0.043</td><td></td></tr>
+    <tr><td>lineup_top_heavy_diff</td><td class="num">-0.035</td><td class="num">+0.004</td><td class="num">-0.017</td><td class="num">+0.015</td><td class="num neg">+0.032</td><td><span class="flag flag-flip">FLIP</span></td></tr>
+  </tbody>
+</table>
+<p class="note">5 of 9 stable features show FLIP or DROP in 2025. These correlations are all tiny (&lt;0.05) &mdash; individual features have weak predictive power, the model aggregates many weak signals.</p>
+
+<h3>Overall Model Signal</h3>
+<table>
+  <thead><tr><th>Era</th><th class="num">corr(pred, actual)</th><th class="num">corr(edge, mkt_residual)</th></tr></thead>
+  <tbody>
+    <tr><td>2017-2019</td><td class="num">+0.180</td><td class="num">+0.019</td></tr>
+    <tr><td>2021-2024</td><td class="num">+0.187</td><td class="num pos">+0.100</td></tr>
+    <tr><td>2017-2024</td><td class="num">+0.182</td><td class="num">+0.066</td></tr>
+    <tr><td><strong>2025</strong></td><td class="num">+0.127</td><td class="num">+0.039</td></tr>
+  </tbody>
+</table>
+<p class="note">Model still has positive signal in 2025 (corr &gt; 0), but weaker than prior years. Notably, 2017-19 also had low edge-residual corr (0.019) but was profitable &mdash; suggesting ROI depends on correlation + edge distribution + where the model bets.</p>
+</div>
+
+<!-- ═══ 7. CALIBRATION ═══ -->
+<h2 id="s7" class="section-anchor">7. Calibration Breakdown</h2>
+<div class="card">
+<table>
+  <thead><tr><th>Metric</th><th class="num">2017-19</th><th class="num">2021-24</th><th class="num">2017-24</th><th class="num">2025</th></tr></thead>
+  <tbody>
+    <tr><td>Raw pred mean</td><td class="num">+0.158</td><td class="num">+0.112</td><td class="num">+0.134</td><td class="num">+0.031</td></tr>
+    <tr><td>Raw pred std</td><td class="num">0.713</td><td class="num">0.772</td><td class="num">0.746</td><td class="num">0.727</td></tr>
+    <tr><td>Calibrated pred mean</td><td class="num">+0.419</td><td class="num">+0.341</td><td class="num">+0.379</td><td class="num">+0.205</td></tr>
+    <tr><td>Calibrated pred std</td><td class="num">1.210</td><td class="num">1.311</td><td class="num">1.268</td><td class="num">1.235</td></tr>
+    <tr><td>Market implied margin mean</td><td class="num">+0.380</td><td class="num">+0.350</td><td class="num">+0.357</td><td class="num">+0.363</td></tr>
+    <tr><td>Market implied margin std</td><td class="num">1.159</td><td class="num">1.336</td><td class="num">1.266</td><td class="num">1.255</td></tr>
+    <tr><td><strong>Edge mean</strong></td><td class="num pos">+0.039</td><td class="num neg">-0.009</td><td class="num pos">+0.021</td><td class="num neg"><strong>-0.158</strong></td></tr>
+    <tr><td>Edge std</td><td class="num">0.905</td><td class="num">1.215</td><td class="num">1.092</td><td class="num">1.208</td></tr>
+    <tr><td>Actual margin mean</td><td class="num">+0.097</td><td class="num">+0.103</td><td class="num">+0.110</td><td class="num">+0.181</td></tr>
+    <tr><td>RMSE(pred, actual)</td><td class="num">4.505</td><td class="num">4.337</td><td class="num">4.429</td><td class="num">4.526</td></tr>
+    <tr><td>corr(raw pred, actual)</td><td class="num">+0.180</td><td class="num">+0.187</td><td class="num">+0.182</td><td class="num">+0.127</td></tr>
+    <tr><td>corr(edge, mkt residual)</td><td class="num">+0.019</td><td class="num pos">+0.100</td><td class="num">+0.066</td><td class="num">+0.039</td></tr>
+  </tbody>
+</table>
+
+<h3>Local Recalibration Test</h3>
+<p>Rescaling model predictions using 2025's own mean/std (instead of global):</p>
+<table>
+  <thead><tr><th>Calibration</th><th class="num">corr(edge, residual)</th></tr></thead>
+  <tbody>
+    <tr><td>Global (as-is)</td><td class="num">+0.039</td></tr>
+    <tr><td>Local (2025 only)</td><td class="num">+0.039</td></tr>
+  </tbody>
+</table>
+<p class="note">Local &asymp; global &rArr; calibration drift is NOT a factor. The edge mean of -0.158 comes from the model systematically favoring away sides, not from miscalibration.</p>
+</div>
+
+<!-- ═══ 8. MARKET STRUCTURE ═══ -->
+<h2 id="s8" class="section-anchor">8. Market Structure Changes</h2>
+<div class="card">
+<table>
+  <thead><tr><th class="num">Season</th><th class="num">Games</th><th class="num">H2H cov%</th><th class="num">Avg books</th><th class="num">Mean vig</th><th class="num">Mean |ML|</th><th class="num">Total cov%</th></tr></thead>
+  <tbody>
+    <tr><td class="num">2017</td><td class="num">2377</td><td class="num">100%</td><td class="num">1.0</td><td class="num">0.026</td><td class="num">146</td><td class="num">100%</td></tr>
+    <tr><td class="num">2018</td><td class="num">2459</td><td class="num">100%</td><td class="num">1.0</td><td class="num">0.027</td><td class="num">156</td><td class="num">100%</td></tr>
+    <tr><td class="num">2019</td><td class="num">2453</td><td class="num">100%</td><td class="num">1.0</td><td class="num">0.021</td><td class="num">159</td><td class="num">100%</td></tr>
+    <tr><td class="num">2020</td><td class="num">889</td><td class="num">100%</td><td class="num">7.7</td><td class="num">0.035</td><td class="num">175</td><td class="num">100%</td></tr>
+    <tr><td class="num">2021</td><td class="num">2414</td><td class="num">100%</td><td class="num">9.7</td><td class="num">0.031</td><td class="num">167</td><td class="num">100%</td></tr>
+    <tr><td class="num">2022</td><td class="num">1768</td><td class="num">100%</td><td class="num">16.8</td><td class="num">0.040</td><td class="num">176</td><td class="num">99%</td></tr>
+    <tr><td class="num">2023</td><td class="num">1844</td><td class="num">100%</td><td class="num">14.3</td><td class="num">0.042</td><td class="num">163</td><td class="num">100%</td></tr>
+    <tr><td class="num">2024</td><td class="num">1872</td><td class="num">100%</td><td class="num">9.6</td><td class="num">0.041</td><td class="num">161</td><td class="num">100%</td></tr>
+    <tr style="font-weight:600"><td class="num">2025</td><td class="num">1908</td><td class="num">100%</td><td class="num">9.3</td><td class="num">0.043</td><td class="num">163</td><td class="num">100%</td></tr>
+  </tbody>
+</table>
+<p class="note">2025 market structure is virtually identical to 2023-2024. No smoking gun here &mdash; vig slightly higher but consistent with trend.</p>
+</div>
+
+<!-- ═══ 9. TEAMS ═══ -->
+<h2 id="s9" class="section-anchor">9. Team-Level Analysis (2025, &ge; 1.5 runs)</h2>
+<div class="card">
+<p style="margin-bottom:12px"><strong>Total 2025 P&amp;L:</strong> <span class="neg">$-10,446</span></p>
+<table>
+  <thead><tr><th>Team</th><th class="num">Bets</th><th class="num">W-L</th><th class="num">ROI</th><th class="num">P&amp;L</th><th class="num">% of loss</th><th class="num">Avg Edge</th></tr></thead>
+  <tbody>
+    <tr><td>Washington Nationals</td><td class="num">26</td><td class="num">4-22</td><td class="num neg">-63.5%</td><td class="num neg">$-4,062</td><td class="num neg">38.9%</td><td class="num">2.29</td></tr>
+    <tr><td>New York Mets</td><td class="num">16</td><td class="num">4-12</td><td class="num neg">-58.1%</td><td class="num neg">$-2,322</td><td class="num neg">22.2%</td><td class="num">2.75</td></tr>
+    <tr><td>Pittsburgh Pirates</td><td class="num">18</td><td class="num">5-13</td><td class="num neg">-35.9%</td><td class="num neg">$-1,722</td><td class="num neg">16.5%</td><td class="num">2.49</td></tr>
+    <tr><td>Philadelphia Phillies</td><td class="num">12</td><td class="num">3-9</td><td class="num neg">-51.7%</td><td class="num neg">$-1,551</td><td class="num neg">14.8%</td><td class="num">2.11</td></tr>
+    <tr><td>Colorado Rockies</td><td class="num">11</td><td class="num">2-9</td><td class="num neg">-58.0%</td><td class="num neg">$-1,392</td><td class="num neg">13.3%</td><td class="num">1.79</td></tr>
+    <tr><td>Tampa Bay Rays</td><td class="num">5</td><td class="num">0-5</td><td class="num neg">-100.0%</td><td class="num neg">$-1,300</td><td class="num neg">12.4%</td><td class="num">2.91</td></tr>
+    <tr><td>Chicago White Sox</td><td class="num">16</td><td class="num">5-11</td><td class="num neg">-30.9%</td><td class="num neg">$-1,206</td><td class="num neg">11.5%</td><td class="num">2.14</td></tr>
+    <tr><td>Minnesota Twins</td><td class="num">6</td><td class="num">1-5</td><td class="num neg">-63.7%</td><td class="num neg">$-956</td><td class="num neg">9.2%</td><td class="num">1.91</td></tr>
+    <tr><td>Texas Rangers</td><td class="num">9</td><td class="num">3-6</td><td class="num neg">-32.8%</td><td class="num neg">$-721</td><td class="num neg">6.9%</td><td class="num">2.56</td></tr>
+    <tr><td>Boston Red Sox</td><td class="num">3</td><td class="num">0-3</td><td class="num neg">-100.0%</td><td class="num neg">$-700</td><td class="num neg">6.7%</td><td class="num">3.05</td></tr>
+    <tr><td colspan="7" style="border-top:2px solid var(--border); padding-top:4px"></td></tr>
+    <tr><td>Chicago Cubs</td><td class="num">9</td><td class="num">8-1</td><td class="num pos">+111.1%</td><td class="num pos">$+2,445</td><td class="num pos">23.4%</td><td class="num">2.03</td></tr>
+    <tr><td>Athletics</td><td class="num">11</td><td class="num">7-4</td><td class="num pos">+81.2%</td><td class="num pos">$+2,031</td><td class="num pos">19.4%</td><td class="num">2.05</td></tr>
+    <tr><td>Los Angeles Dodgers</td><td class="num">5</td><td class="num">3-2</td><td class="num pos">+83.2%</td><td class="num pos">$+1,248</td><td class="num pos">11.9%</td><td class="num">3.57</td></tr>
+    <tr><td>St. Louis Cardinals</td><td class="num">4</td><td class="num">3-1</td><td class="num pos">+84.1%</td><td class="num pos">$+841</td><td class="num pos">8.1%</td><td class="num">2.42</td></tr>
+    <tr><td>Los Angeles Angels</td><td class="num">15</td><td class="num">6-9</td><td class="num pos">+15.2%</td><td class="num pos">$+608</td><td class="num pos">5.8%</td><td class="num">2.65</td></tr>
+  </tbody>
+</table>
+<p class="note">Top 3 losers (WSH, NYM, PIT) account for 78% of total losses. These are all teams the model bets as dogs with large edges but went 13-47 (21.7%).</p>
+</div>
+
+<!-- ═══ 10. EDGE DISTRIBUTION ═══ -->
+<h2 id="s10" class="section-anchor">10. Edge Distribution Comparison</h2>
+<div class="card">
+<table>
+  <thead><tr><th>Metric</th><th class="num">2017-19</th><th class="num">2021-24</th><th class="num">2017-24</th><th class="num">2025</th></tr></thead>
+  <tbody>
+    <tr><td>Mean</td><td class="num">+0.039</td><td class="num">-0.009</td><td class="num">+0.021</td><td class="num neg">-0.158</td></tr>
+    <tr><td>Std</td><td class="num">0.905</td><td class="num">1.215</td><td class="num">1.092</td><td class="num">1.208</td></tr>
+    <tr><td>Skew</td><td class="num">0.164</td><td class="num">0.422</td><td class="num">0.335</td><td class="num">0.579</td></tr>
+    <tr><td>Kurtosis</td><td class="num">2.291</td><td class="num">4.553</td><td class="num">4.476</td><td class="num">3.883</td></tr>
+    <tr><td>Median</td><td class="num">+0.036</td><td class="num">-0.032</td><td class="num">+0.005</td><td class="num neg">-0.204</td></tr>
+    <tr><td>% |edge| &ge; 0.5</td><td class="num">56.4%</td><td class="num">60.5%</td><td class="num">58.9%</td><td class="num">61.4%</td></tr>
+    <tr><td>% |edge| &ge; 1.0</td><td class="num">25.3%</td><td class="num">31.6%</td><td class="num">29.0%</td><td class="num">32.5%</td></tr>
+    <tr><td>% |edge| &ge; 1.5</td><td class="num">8.8%</td><td class="num">15.8%</td><td class="num">12.8%</td><td class="num">15.4%</td></tr>
+    <tr><td>% |edge| &ge; 2.0</td><td class="num">2.8%</td><td class="num">7.8%</td><td class="num">5.6%</td><td class="num">7.7%</td></tr>
+  </tbody>
+</table>
+<p style="margin-top:8px"><strong>KS test (2025 vs 2017-2024):</strong> stat=0.096, <span class="neg">p=0.000</span> &mdash; distributions are significantly different</p>
+
+<h3>ROI by edge magnitude &mdash; higher conviction = MORE wrong in 2025</h3>
+<table>
+  <thead><tr><th>Threshold</th><th class="num">2017-2024 ROI</th><th class="num">2025 ROI</th><th class="num">&Delta;</th></tr></thead>
+  <tbody>
+    <tr><td>&ge; 0.5</td><td class="num pos">+1.7%</td><td class="num neg">-10.5%</td><td class="num neg">-12.2pp</td></tr>
+    <tr><td>&ge; 1.0</td><td class="num pos">+4.0%</td><td class="num neg">-12.0%</td><td class="num neg">-16.0pp</td></tr>
+    <tr><td>&ge; 1.5</td><td class="num pos">+10.2%</td><td class="num neg">-14.3%</td><td class="num neg">-24.5pp</td></tr>
+    <tr><td>&ge; 2.0</td><td class="num pos">+16.3%</td><td class="num neg">-19.0%</td><td class="num neg">-35.3pp</td></tr>
+  </tbody>
+</table>
+<p class="note">The monotonic widening of &Delta; is the worst possible sign &mdash; the model's highest-confidence 2025 bets lost the most.</p>
+</div>
+
+<!-- ═══ INTEGRITY ═══ -->
+<h2>Integrity Checks</h2>
+<div class="card" style="font-size:13px; color:var(--muted)">
+  <p>Home (107) + Away (186) = 293 vs Total (293) &mdash; OK</p>
+  <p>Dog (239) + Fav (54) = 293 vs Total (293) &mdash; OK</p>
+  <p>Market residual mean: -0.240 (should be ~0)</p>
+</div>
+
+<p style="text-align:center; color:var(--muted); margin-top:32px; font-size:12px">
+  Generated from 12_diagnose_2025.py &middot; Lasso no-market walk-forward model
+</p>
+
+</body>
+</html>
